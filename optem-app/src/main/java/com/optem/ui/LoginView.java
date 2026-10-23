@@ -194,7 +194,11 @@ public class LoginView {
 
         btnMaestro.setOnAction(e -> {
             String password = txtPassHidden.isVisible() ? txtPassHidden.getText() : txtPassShown.getText();
-            controller.handleLogin(txtNombre.getText(), txtApellido.getText(), txtCorreo.getText(), password, "MAESTRO", lblError, stage);
+            
+            // TRUCO PARA EL ADMINISTRADOR (Si escribe ese correo, se le da acceso especial)
+            String rolAAsignar = txtCorreo.getText().equals("admin@uaemex.mx") ? "ADMINISTRADOR" : "MAESTRO";
+            
+            controller.handleLogin(txtNombre.getText(), txtApellido.getText(), txtCorreo.getText(), password, rolAAsignar, lblError, stage);
         });
 
         formBox.getChildren().addAll(lblTitle, txtNombre, txtApellido, txtCorreo, passContainer, lblError, lblTipo, buttonsBox);
@@ -204,7 +208,6 @@ public class LoginView {
 
         Scene scene = new Scene(root, 1280, 720);
         
-        // ¡Magia! Conectamos el archivo CSS a nuestra escena
         try {
             String css = getClass().getResource("/css/styles.css").toExternalForm();
             scene.getStylesheets().add(css);
@@ -264,8 +267,6 @@ public class LoginView {
         
         box.getChildren().addAll(iconLbl, textLbl, subLbl);
         Button btn = new Button(); btn.setGraphic(box); btn.setPrefSize(180, 140);
-        
-        // ¡Mira qué limpio queda esto gracias al CSS!
         btn.getStyleClass().add("boton-tipo-cuenta");
         
         return btn;
