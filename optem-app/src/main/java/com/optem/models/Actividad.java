@@ -4,53 +4,39 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 public class Actividad {
-
+    private String id;
     private String nombre;
-    private String materia;           // <- Faltaba esta variable
     private String tipo;
     private String descripcion;
-    private LocalTime horaVencimiento;
     private LocalDate fecha;
-    private boolean hecho;
-    private boolean asignadaPorAdmin; // <- Faltaba esta variable
+    private LocalTime horaVencimiento;
+    private String estado; // "PENDIENTE", "EN_PROCESO", "COMPLETADO"
+    private String materia;
 
-    // Constructor vacío (necesario para crear tareas desde la vista)
-    public Actividad() {
-    }
-
-    // Constructor de 8 parámetros (El que pide el ActividadManager)
-    public Actividad(String nombre, String materia, String tipo, String descripcion, LocalTime horaVencimiento, LocalDate fecha, boolean hecho, boolean asignadaPorAdmin) {
+    public Actividad(String id, String nombre, String tipo, String descripcion, LocalDate fecha, LocalTime horaVencimiento, String materia) {
+        this.id = id;
         this.nombre = nombre;
-        this.materia = materia;
         this.tipo = tipo;
         this.descripcion = descripcion;
-        this.horaVencimiento = horaVencimiento;
         this.fecha = fecha;
-        this.hecho = hecho;
-        this.asignadaPorAdmin = asignadaPorAdmin;
+        this.horaVencimiento = horaVencimiento;
+        this.materia = materia;
+        this.estado = "PENDIENTE"; // Por defecto, toda tarea nueva está pendiente
     }
 
-    // ==========================================
-    // GETTERS
-    // ==========================================
+    // --- GETTERS Y SETTERS ---
+    public String getId() { return id; }
     public String getNombre() { return nombre; }
-    public String getMateria() { return materia; }
     public String getTipo() { return tipo; }
     public String getDescripcion() { return descripcion; }
-    public LocalTime getHoraVencimiento() { return horaVencimiento; }
     public LocalDate getFecha() { return fecha; }
-    public boolean isHecho() { return hecho; }
-    public boolean isAsignadaPorAdmin() { return asignadaPorAdmin; }
+    public LocalTime getHoraVencimiento() { return horaVencimiento; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+    public String getMateria() { return materia; }
 
-    // ==========================================
-    // SETTERS
-    // ==========================================
-    public void setNombre(String nombre) { this.nombre = nombre; }
-    public void setMateria(String materia) { this.materia = materia; }
-    public void setTipo(String tipo) { this.tipo = tipo; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-    public void setHoraVencimiento(LocalTime horaVencimiento) { this.horaVencimiento = horaVencimiento; }
-    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
-    public void setHecho(boolean hecho) { this.hecho = hecho; }
-    public void setAsignadaPorAdmin(boolean asignadaPorAdmin) { this.asignadaPorAdmin = asignadaPorAdmin; }
+    // Método crucial para que el Dashboard sepa si sumar XP o no
+    public boolean isHecho() {
+        return "COMPLETADO".equals(estado);
+    }
 }

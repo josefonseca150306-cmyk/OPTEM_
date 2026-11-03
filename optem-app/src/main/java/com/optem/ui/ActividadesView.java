@@ -2,6 +2,7 @@ package com.optem.ui;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 import com.optem.logic.ActividadManager;
 import com.optem.models.Actividad;
@@ -100,7 +101,6 @@ public class ActividadesView extends VBox {
         HBox.setHgrow(panelTabla, Priority.ALWAYS);
 
         tablaActividades = new TableView<>();
-        tablaActividades.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         VBox.setVgrow(tablaActividades, Priority.ALWAYS);
 
         TableColumn<Actividad, String> colNombre = new TableColumn<>("Actividad");
@@ -139,14 +139,16 @@ public class ActividadesView extends VBox {
                 return;
             }
 
-            // Crear el objeto y meter los datos del formulario
-            Actividad nuevaAct = new Actividad();
-            nuevaAct.setNombre(txtNombre.getText());
-            nuevaAct.setTipo(cmbTipo.getValue());
-            nuevaAct.setFecha(dpFecha.getValue());
-            nuevaAct.setHoraVencimiento(LocalTime.of(cmbHora.getValue(), cmbMinuto.getValue()));
-            nuevaAct.setDescripcion(txtDescripcion.getText());
-            nuevaAct.setHecho(false);
+            // Crear el objeto y meter los datos del formulario (CONSTRUCTOR NUEVO)
+            Actividad nuevaAct = new Actividad(
+                UUID.randomUUID().toString(),
+                txtNombre.getText(),
+                cmbTipo.getValue(),
+                txtDescripcion.getText(),
+                dpFecha.getValue(),
+                LocalTime.of(cmbHora.getValue(), cmbMinuto.getValue()),
+                "General"
+            );
 
             // Guardar en la memoria global (Manager)
             ActividadManager.getInstance().agregarActividad(nuevaAct);
@@ -162,7 +164,7 @@ public class ActividadesView extends VBox {
         btnEliminar.setOnAction(e -> {
             Actividad seleccionada = tablaActividades.getSelectionModel().getSelectedItem();
             if (seleccionada != null) {
-                ActividadManager.getInstance().eliminarActividad(seleccionada);
+                ActividadManager.getInstance().getAllActividades().remove(seleccionada);
                 actualizarTabla(dpFecha.getValue());
                 lblMensaje.setText("🗑 Actividad eliminada.");
             }

@@ -1,7 +1,8 @@
 package com.optem.controllers;
 
 import java.util.prefs.Preferences;
-
+ 
+import com.optem.database.MockDB;
 import com.optem.ui.DashboardView;
 
 import javafx.scene.control.Label;
@@ -12,7 +13,6 @@ public class LoginController {
     public boolean checkAutoLogin(Stage stage) {
         Preferences prefsDirect = Preferences.userNodeForPackage(DashboardView.class);
         
-        // Limpieza de memoria (Restauración de fábrica)
         if (prefsDirect.get("ACCOUNTS_LIST", "").isEmpty()) {
             try {
                 prefsDirect.clear();
@@ -21,7 +21,6 @@ public class LoginController {
             }
         }
 
-        // Auto-Login
         String lastActive = prefsDirect.get("LAST_ACTIVE_ACCOUNT", "");
         if (!lastActive.isEmpty()) {
             new DashboardView().show(stage, lastActive, "");
@@ -31,9 +30,17 @@ public class LoginController {
     }
 
     public void handleLogin(String nombre, String apellido, String correo, String password, String rol, Label lblError, Stage stage) {
-        // Validaciones de negocio
-        if (nombre.isEmpty() || correo.isEmpty()) { 
-            lblError.setText("Por favor ingresa tu nombre y tu correo."); 
+        
+        // 1. Validamos que el correo siempre esté lleno
+        if (correo.isEmpty()) { 
+            lblError.setText("Por favor ingresa tu correo institucional."); 
+            lblError.setVisible(true); 
+            return; 
+        }
+
+        // 2. EXCEPCIÓN PARA ADMIN: Si NO es administrador, entonces SÍ es obligatorio el nombre
+        if (!rol.equals("ADMINISTRADOR") && nombre.isEmpty()) { 
+            lblError.setText("Por favor ingresa tu nombre."); 
             lblError.setVisible(true); 
             return; 
         }
@@ -52,15 +59,30 @@ public class LoginController {
             }
         }
 
-        // Guardado de sesión y ROL
-        Preferences prefs = Preferences.userNodeForPackage(DashboardView.class);
-        String nombreCompleto = nombre + (apellido.isEmpty() ? "" : " " + apellido.trim());
-        prefs.put("NAME_" + correo, nombreCompleto);
-        prefs.put("ROLE_" + correo, rol); // GUARDAMOS EL ROL (ESTUDIANTE O MAESTRO)
-        prefs.put("LAST_ACTIVE_ACCOUNT", correo);
+        // ========================================================
+        // CAPA DE SEGURIDAD: CONSULTAMOS LA BASE DE DATOS (MOCK)
+        // ========================================================
+        boolean accesoConcedido = MockDB.autenticar(correo, password, rol);
 
-        // Redirección al Dashboard
-        DashboardView dashboard = new DashboardView();
-        dashboard.show(stage, correo, "");
+        if (accesoConcedido) {
+            lblError.setVisible(false);
+
+            Preferences prefs = Preferences.userNodeForPackage(DashboardView.class);
+            
+            // Si es Admin y no puso nombre, guardamos "Administrador", si no, guardamos su nombre real
+            String nombreFinal = nombre.isEmpty() ? "Administrador Principal" : nombre;
+            String nombreCompleto = nombreFinal + (apellido.isEmpty() ? "" : " " + apellido.trim());
+            
+            prefs.put("NAME_" + correo, nombreCompleto);
+            prefs.put("ROLE_" + correo, rol); 
+            prefs.put("LAST_ACTIVE_ACCOUNT", correo);
+
+            DashboardView dashboard = new DashboardView();
+            dashboard.show(stage, correo, "");
+            
+        } else {
+            lblError.setText("❌ Correo o número de cuenta incorrectos."); 
+            lblError.setVisible(true); 
+        }
     }
 }

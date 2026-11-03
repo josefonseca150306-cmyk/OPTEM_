@@ -1,12 +1,12 @@
 package com.optem.controllers;
 
-import com.optem.logic.ActividadManager;
-import com.optem.models.Actividad;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.optem.logic.ActividadManager;
+import com.optem.models.Actividad;
 
 public class ActividadesController {
 
@@ -14,7 +14,8 @@ public class ActividadesController {
      * Filtra las actividades basándose en la categoría, texto de búsqueda y materia.
      */
     public List<Actividad> getActividadesFiltradas(String categoria, String busqueda, String materia) {
-        return ActividadManager.getInstance().getTodasLasActividades().stream()
+        // ACTUALIZADO: Usamos getAllActividades() del nuevo Manager Kanban
+        return ActividadManager.getInstance().getAllActividades().stream()
             .filter(act -> categoria.equals("Todas") || act.getTipo().equals(categoria))
             .filter(act -> busqueda == null || busqueda.isEmpty() || act.getNombre().toLowerCase().contains(busqueda.toLowerCase()))
             .filter(act -> materia == null || materia.equals("Todas") || act.getMateria().equals("General") || act.getMateria().equals(materia))
@@ -32,8 +33,10 @@ public class ActividadesController {
         String categoriaLimpia = categoriaCompleta.substring(categoriaCompleta.indexOf(" ") + 1); 
         LocalTime horaLocal = LocalTime.parse(horaStr);
         LocalDate fechaHoy = LocalDate.now(); 
+        String id = String.valueOf(System.currentTimeMillis()); // Generamos ID único
         
-        Actividad nuevaAct = new Actividad(titulo, "General", categoriaLimpia, "Actividad agregada por el alumno.", horaLocal, fechaHoy, false, false);
+        // ACTUALIZADO: Usamos el nuevo constructor compatible con Kanban
+        Actividad nuevaAct = new Actividad(id, titulo, categoriaLimpia, "Actividad agregada por el alumno.", fechaHoy, horaLocal, "General");
         ActividadManager.getInstance().agregarActividad(nuevaAct);
         return true;
     }
@@ -42,14 +45,16 @@ public class ActividadesController {
      * Marca una actividad como hecha.
      */
     public void marcarComoEntregado(Actividad act) {
-        act.setHecho(true);
+        // ACTUALIZADO: Movemos la tarea a "COMPLETADO" en el Kanban
+        ActividadManager.getInstance().actualizarEstadoActividad(act.getId(), "COMPLETADO");
     }
 
     /**
      * Intenta eliminar una actividad. Retorna true si se borró, false si estaba bloqueada por el Admin.
      */
     public boolean eliminarActividad(Actividad act) {
-        return ActividadManager.getInstance().eliminarActividad(act);
+        // ACTUALIZADO: Eliminamos directo de la lista centralizada
+        return ActividadManager.getInstance().getAllActividades().remove(act);
     }
 
     /**
