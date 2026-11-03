@@ -6,56 +6,63 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.optem.database.MockDB;
 import com.optem.logic.ActividadManager;
 import com.optem.models.Actividad;
 
 public class TareasController {
-
+    
     private final ActividadManager manager = ActividadManager.getInstance();
 
-    public List<Actividad> getTareasPorEstado(String estado) {
-        List<Actividad> filtradas = new ArrayList<>();
-        for (Actividad act : manager.getAllActividades()) {
-            
-            // --- MOTOR DE CADUCIDAD AUTOMÁTICA ---
-            if (isTareaCaducada(act) && !act.getEstado().equals("COMPLETADO")) {
-                manager.actualizarEstadoActividad(act.getId(), "COMPLETADO");
-                act.setEstado("COMPLETADO"); 
-            }
-
-            if (act.getEstado().equals(estado)) {
-                filtradas.add(act);
-            }
-        }
-        return filtradas;
-    }
-
-    public void moverTarea(Actividad tarea, String nuevoEstado) {
-        manager.actualizarEstadoActividad(tarea.getId(), nuevoEstado);
-    }
-
     public List<String> getNombresMaterias() {
-        List<String> materias = new ArrayList<>();
-        for (Map<String, String> m : MockDB.obtenerMateriasRegistradas()) {
-            materias.add(m.get("nombre"));
+        List<String> nombres = new ArrayList<>();
+        try {
+            List< Map < String , String >> clases = MockDB.obtenerMateriasRegistradas();
+            if (clases != null) {
+                for (Map<String, String> c : clases) {
+                    nombres.add(c.get("nombre"));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al obtener materias: " + e.getMessage());
         }
-        return materias;
+        return nombres;
     }
 
-    public void crearNuevaTarea(String nombre, String materia, String desc) {
+    public void crearNuevaTarea(String titulo, String materia, String descripcion, LocalDate fecha, LocalTime hora) {
         String id = String.valueOf(System.currentTimeMillis());
-        // Por defecto, le damos 2 días para entregar a las 23:59
-        Actividad nueva = new Actividad(id, nombre, "Tarea", desc, LocalDate.now().plusDays(2), LocalTime.of(23, 59), materia);
-        manager.agregarActividad(nueva);
+        Actividad nuevaTarea = new Actividad(id, titulo, "Tarea", descripcion, fecha, hora, materia);
+        nuevaTarea.setEstado("PENDIENTE"); 
+        manager.agregarActividad(nuevaTarea);
     }
 
-    // Método que verifica si la fecha y hora actual ya superaron la fecha límite
+    public List<Actividad> getTareasPorEstado(String estado) {
+        return manager.getAllActividades().stream()
+            .filter(act -> "Tarea".equalsIgnoreCase(act.getTipo()))
+            .filter(act -> {
+                if (isTareaCaducada(act) && !"COMPLETADO".equals(act.getEstado())) {
+                    manager.actualizarEstadoActividad(act.getId(), "COMPLETADO");
+                    act.setEstado("COMPLETADO");
+                }
+                return estado.equalsIgnoreCase(act.getEstado());
+            })
+            .collect(Collectors.toList());
+    }
+
+    public void moverTarea(Actividad tarea, String estadoDestino) {
+        manager.actualizarEstadoActividad(tarea.getId(), estadoDestino);
+        tarea.setEstado(estadoDestino);
+    }
+
     public boolean isTareaCaducada(Actividad tarea) {
-        // CORRECCIÓN: Usamos getFecha() en lugar de getFechaVencimiento()
         if (tarea.getFecha() == null || tarea.getHoraVencimiento() == null) return false;
-        LocalDateTime fechaLimite = LocalDateTime.of(tarea.getFecha(), tarea.getHoraVencimiento());
-        return LocalDateTime.now().isAfter(fechaLimite);
+        try {
+            LocalDateTime limite = LocalDateTime.of(tarea.getFecha(), tarea.getHoraVencimiento());
+            return LocalDateTime.now().isAfter(limite);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

@@ -39,4 +39,24 @@ public class Actividad {
     public boolean isHecho() {
         return "COMPLETADO".equals(estado);
     }
+
+    public void setFecha(LocalDate fecha) {
+        this.fecha = fecha;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public void setHoraVencimiento(LocalTime horaVencimiento) {
+        this.horaVencimiento = horaVencimiento;
+    }
 }

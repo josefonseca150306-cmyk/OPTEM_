@@ -2,6 +2,7 @@ package com.optem.controllers;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -10,57 +11,57 @@ import com.optem.models.Actividad;
 
 public class ActividadesController {
 
-    /**
-     * Filtra las actividades basándose en la categoría, texto de búsqueda y materia.
-     */
+    private final ActividadManager manager = ActividadManager.getInstance();
+
     public List<Actividad> getActividadesFiltradas(String categoria, String busqueda, String materia) {
-        // ACTUALIZADO: Usamos getAllActividades() del nuevo Manager Kanban
-        return ActividadManager.getInstance().getAllActividades().stream()
-            .filter(act -> categoria.equals("Todas") || act.getTipo().equals(categoria))
+        return manager.getAllActividades().stream()
+            .filter(act -> !"Tarea".equalsIgnoreCase(act.getTipo())) // Excluir académicas
+            .filter(act -> categoria == null || categoria.equals("Todas") || act.getTipo().equals(categoria))
             .filter(act -> busqueda == null || busqueda.isEmpty() || act.getNombre().toLowerCase().contains(busqueda.toLowerCase()))
             .filter(act -> materia == null || materia.equals("Todas") || act.getMateria().equals("General") || act.getMateria().equals(materia))
             .collect(Collectors.toList());
     }
 
-    /**
-     * Valida y guarda una nueva actividad. Retorna true si tuvo éxito, false si el título está vacío.
-     */
-    public boolean guardarNuevaActividad(String titulo, String categoriaCompleta, String horaStr) {
-        if (titulo == null || titulo.trim().isEmpty()) {
-            return false;
-        }
+    public List<Actividad> getActividadesPorFecha(LocalDate fecha) {
+        List<Actividad> todas = manager.getActividadesDelDia(fecha);
+        if (todas == null) return new ArrayList<>();
         
-        String categoriaLimpia = categoriaCompleta.substring(categoriaCompleta.indexOf(" ") + 1); 
-        LocalTime horaLocal = LocalTime.parse(horaStr);
-        LocalDate fechaHoy = LocalDate.now(); 
-        String id = String.valueOf(System.currentTimeMillis()); // Generamos ID único
-        
-        // ACTUALIZADO: Usamos el nuevo constructor compatible con Kanban
-        Actividad nuevaAct = new Actividad(id, titulo, categoriaLimpia, "Actividad agregada por el alumno.", fechaHoy, horaLocal, "General");
-        ActividadManager.getInstance().agregarActividad(nuevaAct);
+        return todas.stream()
+            .filter(act -> !"Tarea".equalsIgnoreCase(act.getTipo()))
+            .collect(Collectors.toList());
+    }
+
+    public boolean guardarNuevaActividad(String titulo, String tipo, String descripcion, LocalDate fecha, LocalTime hora) {
+        if (titulo == null || titulo.trim().isEmpty() || tipo == null) return false;
+        String id = String.valueOf(System.currentTimeMillis()); 
+        Actividad nuevaAct = new Actividad(id, titulo, tipo, descripcion, fecha, hora, "General");
+        manager.agregarActividad(nuevaAct);
         return true;
     }
 
-    /**
-     * Marca una actividad como hecha.
-     */
+    // NUEVO MÉTODO: Permite guardar los cambios de una actividad editada
+    public boolean actualizarActividad(String id, String titulo, String tipo, String descripcion, LocalDate fecha, LocalTime hora) {
+        if (titulo == null || titulo.trim().isEmpty() || tipo == null) return false;
+        
+        for (Actividad act : manager.getAllActividades()) {
+            if (act.getId().equals(id)) {
+                act.setNombre(titulo);
+                act.setTipo(tipo);
+                act.setDescripcion(descripcion);
+                act.setFecha(fecha);
+                act.setHoraVencimiento(hora);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void marcarComoEntregado(Actividad act) {
-        // ACTUALIZADO: Movemos la tarea a "COMPLETADO" en el Kanban
-        ActividadManager.getInstance().actualizarEstadoActividad(act.getId(), "COMPLETADO");
+        manager.actualizarEstadoActividad(act.getId(), "COMPLETADO");
+        act.setEstado("COMPLETADO");
     }
 
-    /**
-     * Intenta eliminar una actividad. Retorna true si se borró, false si estaba bloqueada por el Admin.
-     */
     public boolean eliminarActividad(Actividad act) {
-        // ACTUALIZADO: Eliminamos directo de la lista centralizada
-        return ActividadManager.getInstance().getAllActividades().remove(act);
-    }
-
-    /**
-     * Genera el formato de texto oculto que se envía al chatbot cuando arrastras una tarjeta.
-     */
-    public String generarDatosArrastre(Actividad act) {
-        return "ACT|" + act.getNombre() + "|" + act.getTipo() + "|" + act.getDescripcion() + "|" + act.getHoraVencimiento() + "|" + act.getFecha().toString();
+        return manager.getAllActividades().remove(act);
     }
 }

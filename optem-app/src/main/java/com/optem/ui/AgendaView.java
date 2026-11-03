@@ -2,12 +2,14 @@ package com.optem.ui;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.prefs.Preferences;
 
 import com.optem.controllers.AgendaController;
+import com.optem.logic.NotificacionManager;
 import com.optem.models.Actividad;
 
 import javafx.geometry.HPos;
@@ -17,14 +19,24 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Arc;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
+import javafx.scene.shape.StrokeLineCap;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -34,56 +46,58 @@ public class AgendaView {
     private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder;
     
     private LocalDate fechaActual = LocalDate.now();
-    private String vistaActual = "WEEK"; // DAY, WEEK, MONTH
+    private String vistaActual = "WEEK"; 
+    private String filtroActual = "Todas"; 
     
-    private VBox view; // El contenedor raíz que espera tu Dashboard
+    private VBox view;
     private BorderPane layoutMain;
     private VBox panelCentral;
     private GridPane gridMiniCalendario;
     private Label lblMesMini;
+    private VBox dashboardProductividad; 
     private Stage stagePrincipal;
 
     public AgendaView() {
-        leerPreferencias();
+        try {
+            leerPreferencias();
+            view = new VBox();
+            view.setStyle("-fx-background-color: transparent;");
 
-        view = new VBox();
-        view.setStyle("-fx-background-color: transparent;");
+            layoutMain = new BorderPane();
+            layoutMain.setPadding(new Insets(25, 30, 25, 30));
+            VBox.setVgrow(layoutMain, Priority.ALWAYS);
 
-        layoutMain = new BorderPane();
-        layoutMain.setPadding(new Insets(25, 30, 25, 30));
-        VBox.setVgrow(layoutMain, Priority.ALWAYS);
+            HBox header = crearCabeceraAgenda();
+            layoutMain.setTop(header);
+            BorderPane.setMargin(header, new Insets(0, 0, 20, 0));
 
-        // --- CABECERA (TOP) ---
-        HBox header = crearCabeceraAgenda();
-        layoutMain.setTop(header);
-        BorderPane.setMargin(header, new Insets(0, 0, 20, 0));
+            VBox panelIzquierdo = crearPanelLateralIzquierdo();
+            layoutMain.setLeft(panelIzquierdo);
+            BorderPane.setMargin(panelIzquierdo, new Insets(0, 20, 0, 0));
 
-        // --- PANEL IZQUIERDO (MINI CALENDARIO) ---
-        VBox panelIzquierdo = crearMiniCalendarioLateral();
-        layoutMain.setLeft(panelIzquierdo);
-        BorderPane.setMargin(panelIzquierdo, new Insets(0, 20, 0, 0));
+            panelCentral = new VBox();
+            panelCentral.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 12; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 4);");
+            
+            ScrollPane scrollCentral = new ScrollPane(panelCentral);
+            scrollCentral.setFitToWidth(true);
+            scrollCentral.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
+            layoutMain.setCenter(scrollCentral);
 
-        // --- PANEL CENTRAL (AGENDA DINÁMICA) ---
-        panelCentral = new VBox();
-        panelCentral.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 12; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 4);");
-        
-        ScrollPane scrollCentral = new ScrollPane(panelCentral);
-        scrollCentral.setFitToWidth(true);
-        scrollCentral.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
-        layoutMain.setCenter(scrollCentral);
+            renderizarVistaActual();
 
-        renderizarVistaActual();
+            view.getChildren().add(layoutMain);
 
-        view.getChildren().add(layoutMain);
-
-        view.sceneProperty().addListener((obs, oldS, newS) -> {
-            if (newS != null) newS.windowProperty().addListener((o, oldW, newW) -> { if(newW != null) stagePrincipal = (Stage) newW; });
-        });
+            view.sceneProperty().addListener((obs, oldS, newS) -> {
+                if (newS != null) newS.windowProperty().addListener((o, oldW, newW) -> { if(newW != null) stagePrincipal = (Stage) newW; });
+            });
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR AL CARGAR LA AGENDA: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
-    public VBox getView() {
-        return view;
-    }
+    public VBox getView() { return view; }
 
     private void leerPreferencias() {
         Preferences prefs = Preferences.userNodeForPackage(DashboardView.class);
@@ -103,17 +117,16 @@ public class AgendaView {
         header.setAlignment(Pos.CENTER_LEFT);
 
         Label titulo = new Label("📅 Mi Agenda Universitaria");
-        titulo.setStyle("-fx-font-weight: bold; -fx-font-size: 26px; -fx-text-fill: " + colorTextMain + "; -fx-font-family: 'Segoe UI Emoji';");
+        titulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-family: 'Segoe UI Emoji';");
+        titulo.getStyleClass().add("lbl-titulo-banner"); 
 
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
 
         HBox selectorVista = new HBox(0);
         selectorVista.setStyle("-fx-background-color: " + colorBgBase + "; -fx-background-radius: 8; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8;");
-        
-        Button btnDia = crearBotonVista("Día", "DAY");
-        Button btnSemana = crearBotonVista("Semana", "WEEK");
-        Button btnMes = crearBotonVista("Mes", "MONTH");
-        selectorVista.getChildren().addAll(btnDia, btnSemana, btnMes);
+        selectorVista.getChildren().addAll(
+            crearBotonVista("Día", "DAY"), crearBotonVista("Semana", "WEEK"), crearBotonVista("Mes", "MONTH")
+        );
 
         HBox navBox = new HBox(5);
         Button btnAtras = new Button("◀"); btnAtras.setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-cursor: hand; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6;");
@@ -131,157 +144,334 @@ public class AgendaView {
 
     private Button crearBotonVista(String texto, String idVista) {
         Button btn = new Button(texto);
-        btn.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 15;");
+        if (idVista.equals(vistaActual)) {
+            btn.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 6; -fx-padding: 8 15;");
+        } else {
+            btn.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 15;");
+        }
         btn.setOnAction(e -> {
             vistaActual = idVista;
-            renderizarVistaActual();
-            HBox parent = (HBox) btn.getParent();
-            for (javafx.scene.Node n : parent.getChildren()) {
-                n.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 15;");
+            if (btn.getParent() != null) {
+                for (javafx.scene.Node n : ((HBox) btn.getParent()).getChildren()) {
+                    n.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 15;");
+                }
             }
             btn.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 6; -fx-padding: 8 15;");
+            renderizarVistaActual();
         });
-        if(idVista.equals(vistaActual)) btn.fire(); 
         return btn;
     }
 
-    private VBox crearMiniCalendarioLateral() {
-        VBox panel = new VBox(15);
-        panel.setPrefWidth(250);
-        panel.setMaxWidth(250);
-        panel.setPadding(new Insets(20));
-        panel.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 12; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 4);");
+    // ==========================================
+    // PANEL LATERAL Y FILTROS RÁPIDOS
+    // ==========================================
+    private VBox crearPanelLateralIzquierdo() {
+        VBox panel = new VBox(20);
+        // Ampliamos un poco el panel izquierdo para darle respiración a las cosas más grandes
+        panel.setPrefWidth(280); panel.setMaxWidth(280);
+        
+        VBox boxCalendario = new VBox(15);
+        boxCalendario.setPadding(new Insets(20));
+        boxCalendario.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 12; -fx-border-color: " + colorBorder + "; -fx-border-width: 2; -fx-border-radius: 12;");
 
         lblMesMini = new Label();
-        lblMesMini.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: " + colorTextMain + ";");
+        lblMesMini.setStyle("-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: " + colorTextMain + ";");
 
         gridMiniCalendario = new GridPane();
-        gridMiniCalendario.setHgap(5); gridMiniCalendario.setVgap(5);
+        gridMiniCalendario.setHgap(8); gridMiniCalendario.setVgap(8); 
         
         String[] diasCortos = {"Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"};
         for (int i = 0; i < 7; i++) {
             Label l = new Label(diasCortos[i]);
-            l.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 11px; -fx-font-weight: bold;");
+            l.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px; -fx-font-weight: bold;");
             GridPane.setHalignment(l, HPos.CENTER);
             gridMiniCalendario.add(l, i, 0);
         }
 
-        panel.getChildren().addAll(lblMesMini, gridMiniCalendario);
+        boxCalendario.getChildren().addAll(lblMesMini, gridMiniCalendario);
         actualizarMiniCalendario();
+
+        // Filtros Rápidos (Píldoras) - AHORA MÁS GRANDES Y ADAPTATIVOS
+        VBox boxFiltros = new VBox(12);
+        Label lblFil = new Label("Filtros rápidos:");
+        lblFil.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: " + colorTextMuted + ";");
+        
+        // FlowPane permite que los botones salten a la siguiente línea si no caben
+        FlowPane pildoras = new FlowPane();
+        pildoras.setHgap(8); pildoras.setVgap(8);
+        pildoras.getChildren().addAll(
+            crearPildoraFiltro("Todas"), 
+            crearPildoraFiltro("Tareas"), 
+            crearPildoraFiltro("Actividades"), // Nuevo filtro agregado
+            crearPildoraFiltro("Pendientes")
+        );
+        boxFiltros.getChildren().addAll(lblFil, pildoras);
+
+        // Mini Dashboard Semanal - AHORA MÁS GRANDE
+        dashboardProductividad = new VBox(15);
+        dashboardProductividad.setAlignment(Pos.CENTER);
+        dashboardProductividad.setStyle("-fx-background-color: " + colorBgBase + "; -fx-background-radius: 12; -fx-padding: 20;");
+        actualizarAnilloProgreso();
+
+        panel.getChildren().addAll(boxCalendario, boxFiltros, dashboardProductividad);
         return panel;
+    }
+    
+    private Button crearPildoraFiltro(String texto) {
+        Button btn = new Button(texto);
+        // Aumentamos el tamaño de fuente (13px) y el padding (6 14) para hacerlos más clickeables
+        String estiloActivo = "-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-background-radius: 20; -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 6 14;";
+        String estiloInactivo = "-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 20; -fx-font-size: 13px; -fx-cursor: hand; -fx-padding: 5 13;";
+        
+        btn.setStyle(filtroActual.equals(texto) ? estiloActivo : estiloInactivo);
+        
+        btn.setOnAction(e -> {
+            filtroActual = texto;
+            if (btn.getParent() != null) {
+                for (javafx.scene.Node n : ((FlowPane) btn.getParent()).getChildren()) n.setStyle(estiloInactivo);
+            }
+            btn.setStyle(estiloActivo);
+            renderizarVistaActual();
+        });
+        return btn;
+    }
+    
+    private void actualizarAnilloProgreso() {
+        dashboardProductividad.getChildren().clear();
+        int[] datos = controller.getProgresoSemanal(fechaActual.with(DayOfWeek.MONDAY));
+        int completadas = datos[0];
+        int total = datos[1];
+        
+        Label lblT = new Label("Productividad Semanal");
+        lblT.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 14px;");
+        
+        // Círculo mucho más grande (Radio 45, Grosor 8)
+        StackPane anillo = new StackPane();
+        Circle fondo = new Circle(45, Color.TRANSPARENT);
+        fondo.setStyle("-fx-stroke: " + colorBorder + "; -fx-stroke-width: 8;");
+        
+        double porcentaje = total == 0 ? 0 : (double) completadas / total;
+        Arc arco = new Arc(0, 0, 45, 45, 90, -360 * porcentaje);
+        arco.setFill(Color.TRANSPARENT);
+        arco.setStyle("-fx-stroke: " + colorFuerte + "; -fx-stroke-width: 8;");
+        arco.setStrokeLineCap(StrokeLineCap.ROUND);
+        
+        // Porcentaje más visible (20px)
+        Label lblPorc = new Label((int)(porcentaje * 100) + "%");
+        lblPorc.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-font-size: 20px;");
+        
+        anillo.getChildren().addAll(fondo, arco, lblPorc);
+        
+        Label lblInfo = new Label(completadas + " de " + total + " tareas terminadas");
+        lblInfo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px;");
+        
+        dashboardProductividad.getChildren().addAll(lblT, anillo, lblInfo);
     }
 
     private void actualizarMiniCalendario() {
         gridMiniCalendario.getChildren().removeIf(node -> GridPane.getRowIndex(node) != null && GridPane.getRowIndex(node) > 0);
-        
         YearMonth ym = YearMonth.from(fechaActual);
         lblMesMini.setText(ym.format(DateTimeFormatter.ofPattern("MMMM yyyy")).toUpperCase());
-        
         LocalDate primerDiaMes = ym.atDay(1);
         int offset = primerDiaMes.getDayOfWeek().getValue() - 1; 
         int diasEnMes = ym.lengthOfMonth();
-
         int row = 1; int col = offset;
         
         for (int dia = 1; dia <= diasEnMes; dia++) {
             LocalDate fechaCelda = ym.atDay(dia);
             Label lblNum = new Label(String.valueOf(dia));
-            lblNum.setStyle("-fx-text-fill: " + colorTextMain + "; -fx-font-size: 12px;");
+            lblNum.setStyle("-fx-text-fill: " + colorTextMain + "; -fx-font-size: 13px;");
             
             VBox btnDia = new VBox(lblNum);
             btnDia.setAlignment(Pos.CENTER);
-            btnDia.setMinSize(25, 25);
+            btnDia.setMinSize(28, 28);
             btnDia.setStyle("-fx-background-color: transparent; -fx-background-radius: 15; -fx-cursor: hand;");
             
             if (fechaCelda.equals(LocalDate.now())) {
                 btnDia.setStyle("-fx-background-color: " + colorFuerte + "40; -fx-background-radius: 15; -fx-cursor: hand;");
-                lblNum.setStyle("-fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold; -fx-font-size: 12px;");
+                lblNum.setStyle("-fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold;");
             }
             if (fechaCelda.equals(fechaActual)) {
                 btnDia.setStyle("-fx-background-color: " + colorFuerte + "; -fx-background-radius: 15; -fx-cursor: hand;");
-                lblNum.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 12px;");
+                lblNum.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
             }
 
-            btnDia.setOnMouseClicked(e -> {
-                fechaActual = fechaCelda;
-                vistaActual = "DAY"; 
-                renderizarVistaActual();
-            });
-
+            btnDia.setOnMouseClicked(e -> { fechaActual = fechaCelda; vistaActual = "DAY"; renderizarVistaActual(); });
             GridPane.setHalignment(btnDia, HPos.CENTER);
             gridMiniCalendario.add(btnDia, col, row);
-            
-            col++;
-            if (col > 6) { col = 0; row++; }
+            col++; if (col > 6) { col = 0; row++; }
         }
     }
 
     private void renderizarVistaActual() {
         panelCentral.getChildren().clear();
         actualizarMiniCalendario();
+        actualizarAnilloProgreso();
 
-        if (vistaActual.equals("DAY")) {
-            renderizarVistaDia(fechaActual);
-        } else if (vistaActual.equals("WEEK")) {
-            LocalDate inicioSemana = fechaActual.with(DayOfWeek.MONDAY);
-            renderizarVistaSemana(inicioSemana);
-        } else {
-            renderizarVistaMes(YearMonth.from(fechaActual));
-        }
+        if (vistaActual.equals("DAY")) renderizarVistaDia(fechaActual);
+        else if (vistaActual.equals("WEEK")) renderizarVistaSemana(fechaActual.with(DayOfWeek.MONDAY));
+        else renderizarVistaMes(YearMonth.from(fechaActual));
     }
 
+    // ==========================================
+    // VISTA DIARIA
+    // ==========================================
     private void renderizarVistaDia(LocalDate dia) {
         Label lblDia = new Label(dia.format(DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM")).toUpperCase());
-        lblDia.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: " + colorTextMain + "; -fx-padding: 20;");
+        lblDia.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-padding: 20;");
+        lblDia.getStyleClass().add("lbl-titulo-seccion");
         panelCentral.getChildren().add(lblDia);
 
-        List<Actividad> actividades = controller.getActividadesDelDia(dia);
+        AnchorPane timeGrid = new AnchorPane();
+        timeGrid.setPrefHeight(1000); 
         
-        if (actividades == null || actividades.isEmpty()) {
-            panelCentral.getChildren().add(crearMensajeVacio("Día Libre", "No tienes actividades programadas para este día."));
-            return;
+        for (int i = 7; i <= 22; i++) {
+            double posY = (i - 7) * 60;
+            Label lHora = new Label(String.format("%02d:00", i));
+            lHora.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 11px;");
+            AnchorPane.setLeftAnchor(lHora, 10.0);
+            AnchorPane.setTopAnchor(lHora, posY - 8);
+            
+            Line line = new Line(55, 0, 1500, 0); 
+            line.setStyle("-fx-stroke: " + colorBorder + "; -fx-stroke-width: 0.5; -fx-stroke-dash-array: 5 5;");
+            AnchorPane.setLeftAnchor(line, 55.0);
+            AnchorPane.setTopAnchor(line, posY);
+            timeGrid.getChildren().addAll(lHora, line);
         }
 
-        VBox lista = new VBox(10);
-        lista.setPadding(new Insets(0, 20, 20, 20));
-        for (Actividad act : actividades) {
-            lista.getChildren().add(crearTarjetaEventoListado(act));
+        List<Actividad> actividades = controller.getActividadesDelDia(dia, filtroActual);
+        if (actividades != null) {
+            for (Actividad act : actividades) {
+                LocalTime t = (act.getHoraVencimiento() != null) ? act.getHoraVencimiento() : LocalTime.of(12, 0);
+                double posY = (t.getHour() - 7) * 60 + t.getMinute();
+                if(posY < 0) posY = 0; 
+                
+                HBox card = crearTarjetaTimeBlock(act);
+                AnchorPane.setLeftAnchor(card, 65.0);
+                AnchorPane.setTopAnchor(card, posY);
+                AnchorPane.setRightAnchor(card, 20.0);
+                timeGrid.getChildren().add(card);
+            }
         }
-        panelCentral.getChildren().add(lista);
+
+        if (dia.equals(LocalDate.now())) {
+            LocalTime now = LocalTime.now();
+            if (now.getHour() >= 7 && now.getHour() <= 22) {
+                double yNow = (now.getHour() - 7) * 60 + now.getMinute();
+                Line redLine = new Line(55, 0, 1500, 0);
+                redLine.setStyle("-fx-stroke: #D32F2F; -fx-stroke-width: 2;");
+                Circle redDot = new Circle(55, 0, 4, Color.web("#D32F2F"));
+                AnchorPane.setLeftAnchor(redLine, 55.0); AnchorPane.setTopAnchor(redLine, yNow);
+                AnchorPane.setLeftAnchor(redDot, 51.0); AnchorPane.setTopAnchor(redDot, yNow);
+                timeGrid.getChildren().addAll(redLine, redDot);
+            }
+        }
+
+        ScrollPane scrollGrid = new ScrollPane(timeGrid);
+        scrollGrid.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+        scrollGrid.setFitToWidth(true);
+        VBox.setVgrow(scrollGrid, Priority.ALWAYS);
+        panelCentral.getChildren().add(scrollGrid);
     }
 
+    private HBox crearTarjetaTimeBlock(Actividad act) {
+        String colorMat = controller.getColorMateria(act.getMateria());
+        boolean caducada = controller.isActividadCaducada(act) && "COMPLETADO".equals(act.getEstado());
+        
+        HBox card = new HBox(15);
+        card.setAlignment(Pos.CENTER_LEFT);
+        card.setPadding(new Insets(10, 15, 10, 15));
+        card.setStyle("-fx-background-color: " + colorMat + "20; -fx-background-radius: 8; -fx-border-color: " + colorMat + "; -fx-border-radius: 8; -fx-border-width: 0 0 0 4; -fx-cursor: hand;");
+        if (caducada) card.setOpacity(0.5);
+
+        VBox infoBox = new VBox(2);
+        String titulo = (act.getNombre() != null) ? act.getNombre() : "Sin Título";
+        Label lblTit = new Label(titulo);
+        lblTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
+        lblTit.getStyleClass().add("lbl-text-normal");
+        
+        Label lblSub = new Label((act.getMateria() != null ? act.getMateria() : "General") + " • " + act.getHoraVencimiento());
+        lblSub.setStyle("-fx-text-fill: " + colorTextMuted + ";");
+        lblSub.getStyleClass().add("lbl-text-pequeno");
+        
+        infoBox.getChildren().addAll(lblTit, lblSub);
+        card.getChildren().add(infoBox);
+        
+        card.setOnMouseClicked(e -> mostrarVentanaDetalles(act, caducada, "COMPLETADO".equals(act.getEstado()) && !caducada));
+        return card;
+    }
+
+    // ==========================================
+    // VISTA SEMANAL
+    // ==========================================
     private void renderizarVistaSemana(LocalDate inicioSemana) {
-        Label lblSemana = new Label("SEMANA DEL " + inicioSemana.format(DateTimeFormatter.ofPattern("d MMM")) + " AL " + inicioSemana.plusDays(6).format(DateTimeFormatter.ofPattern("d MMM yyyy")));
-        lblSemana.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: " + colorTextMain + "; -fx-padding: 20;");
+        Label lblSemana = new Label("SEMANA DEL " + inicioSemana.format(DateTimeFormatter.ofPattern("d MMM")) + " AL " + inicioSemana.plusDays(6).format(DateTimeFormatter.ofPattern("d MMM yyyy")).toUpperCase());
+        lblSemana.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-padding: 20;");
+        lblSemana.getStyleClass().add("lbl-titulo-seccion"); 
         panelCentral.getChildren().add(lblSemana);
 
         HBox gridSemana = new HBox(10);
         gridSemana.setPadding(new Insets(0, 20, 20, 20));
-        
         String[] nombresDias = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
         
         for (int i = 0; i < 7; i++) {
             LocalDate dia = inicioSemana.plusDays(i);
             VBox colDia = new VBox(10);
             colDia.setPrefWidth(200); HBox.setHgrow(colDia, Priority.ALWAYS);
+            colDia.setStyle("-fx-padding: 5; -fx-background-radius: 8; -fx-border-color: transparent;");
             
             Label lblNum = new Label(String.valueOf(dia.getDayOfMonth()));
-            lblNum.setStyle("-fx-font-weight: bold; -fx-font-size: 24px; -fx-text-fill: " + (dia.equals(LocalDate.now()) ? colorFuerte : colorTextMain) + ";");
+            lblNum.setStyle("-fx-font-weight: bold; -fx-text-fill: " + (dia.equals(LocalDate.now()) ? colorFuerte : colorTextMain) + ";");
+            lblNum.getStyleClass().add("lbl-numero-grande"); 
             
             Label lblNom = new Label(nombresDias[i]);
-            lblNom.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px;");
+            lblNom.setStyle("-fx-text-fill: " + colorTextMuted + ";");
+            lblNom.getStyleClass().add("lbl-text-pequeno");
             
             VBox headerDia = new VBox(lblNom, lblNum);
             headerDia.setAlignment(Pos.CENTER);
             headerDia.setStyle("-fx-padding: 10; -fx-border-color: " + colorBorder + "; -fx-border-width: 0 0 2 0;");
             colDia.getChildren().add(headerDia);
 
-            List<Actividad> acts = controller.getActividadesDelDia(dia);
+            List<Actividad> acts = controller.getActividadesDelDia(dia, filtroActual);
             if(acts != null) {
                 for (Actividad act : acts) {
-                    colDia.getChildren().add(crearBloqueEventoMini(act));
+                    VBox bloque = crearBloqueEventoMini(act);
+                    
+                    bloque.setOnDragDetected(e -> {
+                        Dragboard db = bloque.startDragAndDrop(TransferMode.MOVE);
+                        ClipboardContent content = new ClipboardContent();
+                        content.putString(act.getId()); 
+                        db.setContent(content);
+                        e.consume();
+                    });
+                    colDia.getChildren().add(bloque);
                 }
             }
+
+            colDia.setOnDragOver(e -> {
+                if (e.getGestureSource() != colDia && e.getDragboard().hasString()) e.acceptTransferModes(TransferMode.MOVE);
+                e.consume();
+            });
+            colDia.setOnDragEntered(e -> colDia.setStyle("-fx-padding: 5; -fx-background-radius: 8; -fx-background-color: " + colorFuerte + "15; -fx-border-color: " + colorFuerte + "; -fx-border-style: dashed; -fx-border-radius: 8;"));
+            colDia.setOnDragExited(e -> colDia.setStyle("-fx-padding: 5; -fx-background-radius: 8; -fx-background-color: transparent; -fx-border-color: transparent;"));
+            colDia.setOnDragDropped(e -> {
+                Dragboard db = e.getDragboard();
+                boolean success = false;
+                if (db.hasString()) {
+                    String id = db.getString();
+                    Actividad aMover = controller.buscarActividadPorId(id);
+                    if (aMover != null) {
+                        aMover.setFecha(dia); 
+                        success = true;
+                        renderizarVistaActual(); 
+                        NotificacionManager.mostrarNotificacion("Reprogramado", "Actividad movida al " + nombresDias[dia.getDayOfWeek().getValue()-1], "INFO");
+                    }
+                }
+                e.setDropCompleted(success);
+                e.consume();
+            });
+
             gridSemana.getChildren().add(colDia);
         }
         panelCentral.getChildren().add(gridSemana);
@@ -289,7 +479,8 @@ public class AgendaView {
 
     private void renderizarVistaMes(YearMonth mes) {
         Label lblMes = new Label(mes.format(DateTimeFormatter.ofPattern("MMMM yyyy")).toUpperCase());
-        lblMes.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: " + colorTextMain + "; -fx-padding: 20;");
+        lblMes.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-padding: 20;");
+        lblMes.getStyleClass().add("lbl-titulo-seccion");
         panelCentral.getChildren().add(lblMes);
 
         GridPane gridMes = new GridPane();
@@ -317,20 +508,21 @@ public class AgendaView {
             LocalDate fechaCelda = mes.atDay(dia);
             VBox celdaDia = new VBox(2);
             celdaDia.setPadding(new Insets(5));
-            celdaDia.setMinHeight(80);
+            celdaDia.setMinHeight(90); 
             celdaDia.setStyle("-fx-border-color: " + colorBorder + "; -fx-border-radius: 6; -fx-background-color: " + (fechaCelda.equals(LocalDate.now()) ? colorFuerte+"10" : colorBgBase) + ";");
             
             Label lblNum = new Label(String.valueOf(dia));
             lblNum.setStyle("-fx-font-weight: bold; -fx-text-fill: " + (fechaCelda.equals(LocalDate.now()) ? colorFuerte : colorTextMain) + ";");
+            lblNum.getStyleClass().add("lbl-text-normal");
             celdaDia.getChildren().add(lblNum);
 
-            List<Actividad> acts = controller.getActividadesDelDia(fechaCelda);
+            List<Actividad> acts = controller.getActividadesDelDia(fechaCelda, filtroActual);
             if(acts != null) {
                 int mostrados = 0;
                 for (Actividad act : acts) {
                     if (mostrados >= 2) {
                         Label lblMas = new Label("+" + (acts.size() - 2) + " más");
-                        lblMas.setStyle("-fx-font-size: 9px; -fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold;");
+                        lblMas.setStyle("-fx-font-size: 10px; -fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold;");
                         celdaDia.getChildren().add(lblMas);
                         break;
                     }
@@ -340,9 +532,7 @@ public class AgendaView {
             }
             
             celdaDia.setOnMouseClicked(e -> {
-                fechaActual = fechaCelda;
-                vistaActual = "DAY";
-                renderizarVistaActual();
+                fechaActual = fechaCelda; vistaActual = "DAY"; renderizarVistaActual();
             });
 
             gridMes.add(celdaDia, col, row);
@@ -352,62 +542,23 @@ public class AgendaView {
         panelCentral.getChildren().add(gridMes);
     }
 
-    private HBox crearTarjetaEventoListado(Actividad act) {
-        boolean caducada = controller.isActividadCaducada(act) && "COMPLETADO".equals(act.getEstado());
-        boolean completadaReal = "COMPLETADO".equals(act.getEstado()) && !caducada;
-        
-        HBox card = new HBox(15);
-        card.setAlignment(Pos.CENTER_LEFT);
-        card.setPadding(new Insets(15));
-        card.setStyle("-fx-background-color: " + colorBgBase + "; -fx-background-radius: 8; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8; -fx-border-width: 0 0 0 5; -fx-cursor: hand;");
-        
-        if (caducada) card.setStyle(card.getStyle().replace("-color-border", "#D32F2F") + " -fx-opacity: 0.7;");
-        else if (completadaReal) card.setStyle(card.getStyle().replace("-color-border", "#388E3C") + " -fx-opacity: 0.8;");
-        else card.setStyle(card.getStyle().replace("-color-border", colorFuerte));
-
-        String textoHora = (act.getHoraVencimiento() != null) ? act.getHoraVencimiento().toString() : "--:--";
-        Label lblHora = new Label(textoHora);
-        lblHora.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: " + colorFuerte + "; -fx-min-width: 80px;");
-        
-        VBox infoBox = new VBox(3);
-        String titulo = (act.getNombre() != null) ? act.getNombre() : "Sin Título";
-        Label lblTit = new Label(titulo);
-        lblTit.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: " + colorTextMain + ";" + (completadaReal ? " -fx-strikethrough: true;" : ""));
-        
-        String materiaInfo = (act.getMateria() != null) ? act.getMateria() : "General";
-        String tipoInfo = (act.getTipo() != null) ? act.getTipo() : "Actividad";
-        Label lblSub = new Label(materiaInfo + " • " + tipoInfo);
-        lblSub.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px;");
-        
-        infoBox.getChildren().addAll(lblTit, lblSub);
-        
-        Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        
-        Label status = new Label();
-        status.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 5 10; -fx-background-radius: 12;");
-        if(caducada) { status.setText("❌ CADUCADA"); status.setStyle(status.getStyle() + "-fx-text-fill: #D32F2F; -fx-background-color: #ffe6e6;"); }
-        else if(completadaReal) { status.setText("✅ COMPLETADA"); status.setStyle(status.getStyle() + "-fx-text-fill: #388E3C; -fx-background-color: #E8F5E9;"); }
-        else { status.setText("⏳ PENDIENTE"); status.setStyle(status.getStyle() + "-fx-text-fill: " + colorFuerte + "; -fx-background-color: " + colorFuerte + "20;"); }
-
-        card.getChildren().addAll(lblHora, infoBox, sp, status);
-        card.setOnMouseClicked(e -> mostrarVentanaDetalles(act, caducada, completadaReal));
-        return card;
-    }
-
     private VBox crearBloqueEventoMini(Actividad act) {
+        String colorMat = controller.getColorMateria(act.getMateria());
         boolean caducada = controller.isActividadCaducada(act) && "COMPLETADO".equals(act.getEstado());
+        
         VBox bloque = new VBox(2);
         bloque.setPadding(new Insets(8));
-        bloque.setStyle("-fx-background-color: " + (caducada ? colorBgBase : colorFuerte+"20") + "; -fx-background-radius: 6; -fx-border-color: " + (caducada ? "#D32F2F" : colorFuerte) + "; -fx-border-width: 0 0 0 3; -fx-cursor: hand;");
+        bloque.setStyle("-fx-background-color: " + (caducada ? colorBgBase : colorMat+"20") + "; -fx-background-radius: 6; -fx-border-color: " + (caducada ? "#D32F2F" : colorMat) + "; -fx-border-width: 0 0 0 3; -fx-cursor: hand;");
         if(caducada) bloque.setOpacity(0.6);
 
         String titulo = (act.getNombre() != null) ? act.getNombre() : "Evento";
         Label lTit = new Label(titulo);
-        lTit.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
+        lTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
+        lTit.getStyleClass().add("lbl-text-pequeno"); 
         
         String textoHora = (act.getHoraVencimiento() != null) ? act.getHoraVencimiento().toString() : "00:00";
         Label lHora = new Label(textoHora);
-        lHora.setStyle("-fx-font-size: 10px; -fx-text-fill: " + colorTextMuted + ";");
+        lHora.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 10px;");
         
         bloque.getChildren().addAll(lTit, lHora);
         bloque.setOnMouseClicked(e -> mostrarVentanaDetalles(act, caducada, "COMPLETADO".equals(act.getEstado()) && !caducada));
@@ -415,17 +566,20 @@ public class AgendaView {
     }
 
     private Label crearMicroPildora(Actividad act) {
+        String colorMat = controller.getColorMateria(act.getMateria());
         boolean caducada = controller.isActividadCaducada(act) && "COMPLETADO".equals(act.getEstado());
         String titulo = (act.getNombre() != null) ? act.getNombre() : "Evento";
         Label lbl = new Label("• " + titulo);
-        lbl.setStyle("-fx-font-size: 9px; -fx-text-fill: " + (caducada ? "#D32F2F" : colorFuerte) + "; -fx-font-weight: bold;");
+        lbl.setStyle("-fx-font-size: 10px; -fx-text-fill: " + (caducada ? "#D32F2F" : colorMat) + "; -fx-font-weight: bold;");
         return lbl;
     }
 
     private VBox crearMensajeVacio(String titulo, String msj) {
         VBox b = new VBox(10); b.setAlignment(Pos.CENTER); b.setPadding(new Insets(60, 0, 60, 0));
-        Label l1 = new Label("☕ " + titulo); l1.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: " + colorTextMuted + "; -fx-font-family: 'Segoe UI Emoji';");
+        Label l1 = new Label("☕ " + titulo); l1.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMuted + "; -fx-font-family: 'Segoe UI Emoji';");
+        l1.getStyleClass().add("lbl-titulo-seccion"); 
         Label l2 = new Label(msj); l2.setStyle("-fx-text-fill: " + colorTextMuted + ";");
+        l2.getStyleClass().add("lbl-text-normal"); 
         b.getChildren().addAll(l1, l2);
         return b;
     }
@@ -462,7 +616,6 @@ public class AgendaView {
         GridPane gridTiempo = new GridPane();
         gridTiempo.setHgap(30); gridTiempo.setVgap(10);
         gridTiempo.setStyle("-fx-background-color: " + colorBgBase + "; -fx-padding: 15; -fx-background-radius: 8;");
-        
         gridTiempo.add(crearInfoLabel("FECHA ASIGNADA", "Hoy, 07:00 AM"), 0, 0); 
         
         String fechaTexto = (act.getFecha() != null) ? act.getFecha().toString() : "---";

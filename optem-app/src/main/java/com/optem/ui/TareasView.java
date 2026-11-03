@@ -1,5 +1,7 @@
 package com.optem.ui;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.prefs.Preferences;
 
 import com.optem.controllers.TareasController;
@@ -13,6 +15,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
@@ -37,61 +40,73 @@ public class TareasView {
     private Stage stagePrincipal; 
 
     public VBox getView() {
-        leerPreferenciasVisuales();
-
         VBox layoutMain = new VBox(25);
-        layoutMain.setPadding(new Insets(30, 40, 30, 40));
-        layoutMain.setStyle("-fx-background-color: transparent;");
-
-        // --- CABECERA ---
-        HBox header = new HBox(20);
-        header.setAlignment(Pos.CENTER_LEFT);
         
-        VBox titleBox = new VBox(5);
-        Label titulo = new Label("Tablero de Tareas");
-        titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
-        Label subtitulo = new Label("Organiza tus pendientes y aumenta tu XP Semanal");
-        subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
-        titleBox.getChildren().addAll(titulo, subtitulo);
+        try {
+            leerPreferenciasVisuales();
 
-        Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
+            layoutMain.setPadding(new Insets(30, 40, 30, 40));
+            layoutMain.setStyle("-fx-background-color: transparent;");
 
-        Button btnNuevaTarea = new Button("➕ Crear Nueva Tarea");
-        btnNuevaTarea.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-size: 14px;");
+            // --- CABECERA ---
+            HBox header = new HBox(20);
+            header.setAlignment(Pos.CENTER_LEFT);
+            
+            VBox titleBox = new VBox(5);
+            Label titulo = new Label("Tablero de Tareas");
+            titulo.setStyle("-fx-font-weight: 800; -fx-text-fill: " + colorTextMain + ";");
+            titulo.getStyleClass().add("lbl-titulo-banner"); 
+            
+            Label subtitulo = new Label("Organiza tus pendientes y aumenta tu XP Semanal");
+            subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + ";");
+            subtitulo.getStyleClass().add("lbl-text-normal");
+            titleBox.getChildren().addAll(titulo, subtitulo);
+
+            Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            Button btnNuevaTarea = new Button("➕ Crear Nueva Tarea");
+            btnNuevaTarea.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 8; -fx-cursor: hand;");
+            btnNuevaTarea.getStyleClass().add("lbl-text-normal");
+            
+            VBox formNuevaTarea = crearFormularioNuevaTarea();
+            btnNuevaTarea.setOnAction(e -> {
+                boolean isVisible = !formNuevaTarea.isVisible();
+                formNuevaTarea.setVisible(isVisible);
+                formNuevaTarea.setManaged(isVisible);
+                if(isVisible) {
+                    FadeTransition ft = new FadeTransition(Duration.millis(300), formNuevaTarea);
+                    ft.setFromValue(0); ft.setToValue(1); ft.play();
+                }
+            });
+
+            header.getChildren().addAll(titleBox, spacer, btnNuevaTarea);
+
+            // --- TABLERO KANBAN ---
+            HBox kanbanBoard = new HBox(20);
+            kanbanBoard.setAlignment(Pos.TOP_CENTER);
+            VBox.setVgrow(kanbanBoard, Priority.ALWAYS);
+
+            colPendientes = crearColumnaKanban("📌 Pendientes", "#E65100");
+            colEnProceso = crearColumnaKanban("⏳ En Proceso", "#0288D1");
+            colCompletadas = crearColumnaKanban("✅ Completadas", "#2E7D32");
+
+            kanbanBoard.getChildren().addAll(colPendientes, colEnProceso, colCompletadas);
+
+            cargarTareasEnTablero();
+
+            layoutMain.sceneProperty().addListener((obs, oldS, newS) -> {
+                if (newS != null) {
+                    newS.windowProperty().addListener((o, oldW, newW) -> { if(newW != null) stagePrincipal = (Stage) newW; });
+                }
+            });
+
+            layoutMain.getChildren().addAll(header, formNuevaTarea, kanbanBoard);
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR AL CARGAR EL TABLERO DE TAREAS: " + e.getMessage());
+            e.printStackTrace();
+        }
         
-        VBox formNuevaTarea = crearFormularioNuevaTarea();
-        btnNuevaTarea.setOnAction(e -> {
-            boolean isVisible = !formNuevaTarea.isVisible();
-            formNuevaTarea.setVisible(isVisible);
-            formNuevaTarea.setManaged(isVisible);
-            if(isVisible) {
-                FadeTransition ft = new FadeTransition(Duration.millis(300), formNuevaTarea);
-                ft.setFromValue(0); ft.setToValue(1); ft.play();
-            }
-        });
-
-        header.getChildren().addAll(titleBox, spacer, btnNuevaTarea);
-
-        // --- TABLERO KANBAN ---
-        HBox kanbanBoard = new HBox(20);
-        kanbanBoard.setAlignment(Pos.TOP_CENTER);
-        VBox.setVgrow(kanbanBoard, Priority.ALWAYS);
-
-        colPendientes = crearColumnaKanban("📌 Pendientes", "#E65100");
-        colEnProceso = crearColumnaKanban("⏳ En Proceso", "#0288D1");
-        colCompletadas = crearColumnaKanban("✅ Completadas", "#2E7D32");
-
-        kanbanBoard.getChildren().addAll(colPendientes, colEnProceso, colCompletadas);
-
-        cargarTareasEnTablero();
-
-        layoutMain.sceneProperty().addListener((obs, oldS, newS) -> {
-            if (newS != null) {
-                newS.windowProperty().addListener((o, oldW, newW) -> { if(newW != null) stagePrincipal = (Stage) newW; });
-            }
-        });
-
-        layoutMain.getChildren().addAll(header, formNuevaTarea, kanbanBoard);
         return layoutMain;
     }
 
@@ -114,8 +129,9 @@ public class TareasView {
         form.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 15; -fx-border-color: " + colorBorder + "; -fx-border-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 5);");
         form.setVisible(false); form.setManaged(false);
 
-        Label lblCabecera = new Label("✍ Redactar Nueva Asignación");
-        lblCabecera.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: " + colorFuerte + ";");
+        Label lblCabecera = new Label("✍ Redactar Nueva Asignación (Profesor)");
+        lblCabecera.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + ";");
+        lblCabecera.getStyleClass().add("lbl-titulo-seccion");
 
         GridPane grid = new GridPane(); grid.setHgap(20); grid.setVgap(15);
         
@@ -129,13 +145,28 @@ public class TareasView {
         cmbMateria.setStyle("-fx-background-color: " + colorBgBase + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8;");
         cmbMateria.setPrefWidth(300);
 
+        DatePicker dpFecha = new DatePicker(LocalDate.now());
+        dpFecha.setStyle("-fx-control-inner-background: " + colorBgBase + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8;");
+        dpFecha.setMaxWidth(Double.MAX_VALUE);
+
+        HBox boxHora = new HBox(10);
+        boxHora.setAlignment(Pos.CENTER_LEFT);
+        ComboBox<Integer> cmbHora = new ComboBox<>(); for(int i=0; i<24; i++) cmbHora.getItems().add(i); cmbHora.setValue(23);
+        cmbHora.setStyle("-fx-background-color: " + colorBgBase + ";");
+        ComboBox<Integer> cmbMinuto = new ComboBox<>(); for(int i=0; i<60; i+=5) cmbMinuto.getItems().add(i); cmbMinuto.setValue(55);
+        cmbMinuto.setStyle("-fx-background-color: " + colorBgBase + ";");
+        Label lblSep = new Label(":"); lblSep.setStyle("-fx-text-fill: " + colorTextMain + "; -fx-font-weight: bold;");
+        boxHora.getChildren().addAll(cmbHora, lblSep, cmbMinuto);
+
         TextArea txtDesc = new TextArea(); txtDesc.setPromptText("Escribe los detalles, instrucciones o notas importantes...");
         txtDesc.setPrefRowCount(3);
         txtDesc.setStyle("-fx-control-inner-background: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8;");
 
         grid.add(crearLabelConIcono("Título de la tarea:", "📝"), 0, 0); grid.add(txtNombre, 0, 1);
         grid.add(crearLabelConIcono("Materia vinculada:", "📚"), 1, 0); grid.add(cmbMateria, 1, 1);
-        grid.add(crearLabelConIcono("Detalles e Instrucciones:", "📋"), 0, 2, 2, 1); grid.add(txtDesc, 0, 3, 2, 1);
+        grid.add(crearLabelConIcono("Fecha límite de entrega:", "📅"), 0, 2); grid.add(dpFecha, 0, 3);
+        grid.add(crearLabelConIcono("Hora límite de entrega:", "⏰"), 1, 2); grid.add(boxHora, 1, 3);
+        grid.add(crearLabelConIcono("Detalles e Instrucciones:", "📋"), 0, 4, 2, 1); grid.add(txtDesc, 0, 5, 2, 1);
 
         HBox footerForm = new HBox(15); footerForm.setAlignment(Pos.CENTER_RIGHT);
         
@@ -146,11 +177,17 @@ public class TareasView {
         Button btnGuardar = new Button("Guardar y Publicar");
         btnGuardar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 8; -fx-cursor: hand;");
         btnGuardar.setOnAction(e -> {
-            if(!txtNombre.getText().isEmpty() && cmbMateria.getValue() != null) {
-                controller.crearNuevaTarea(txtNombre.getText(), cmbMateria.getValue(), txtDesc.getText());
+            if(!txtNombre.getText().isEmpty() && cmbMateria.getValue() != null && dpFecha.getValue() != null) {
+                controller.crearNuevaTarea(
+                    txtNombre.getText(), cmbMateria.getValue(), txtDesc.getText(), 
+                    dpFecha.getValue(), LocalTime.of(cmbHora.getValue(), cmbMinuto.getValue())
+                );
                 txtNombre.clear(); txtDesc.clear(); cmbMateria.setValue(null);
                 form.setVisible(false); form.setManaged(false);
                 cargarTareasEnTablero(); 
+                NotificacionManager.mostrarNotificacion("Tarea Asignada", "La tarea se reflejará en la Agenda Académica.", "INFO");
+            } else {
+                NotificacionManager.mostrarNotificacion("Error", "Debes llenar Título, Materia y Fecha límite.", "URGENTE");
             }
         });
 
@@ -161,9 +198,9 @@ public class TareasView {
 
     private VBox crearLabelConIcono(String texto, String icono) {
         Label lbl = new Label(icono + " " + texto);
-        lbl.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-weight: bold; -fx-font-size: 12px;");
-        VBox box = new VBox(lbl);
-        return box;
+        lbl.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-weight: bold;");
+        lbl.getStyleClass().add("lbl-text-pequeno");
+        return new VBox(lbl);
     }
 
     private VBox crearColumnaKanban(String titulo, String colorHeader) {
@@ -177,7 +214,8 @@ public class TareasView {
         VBox.setVgrow(contenedorTarjetas, Priority.ALWAYS);
 
         Label lblTitulo = new Label(titulo);
-        lblTitulo.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: white; -fx-background-color: " + colorHeader + "; -fx-padding: 12; -fx-background-radius: 12 12 0 0; -fx-alignment: center;");
+        lblTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: " + colorHeader + "; -fx-padding: 12; -fx-background-radius: 12 12 0 0; -fx-alignment: center;");
+        lblTitulo.getStyleClass().add("lbl-text-normal");
         lblTitulo.setMaxWidth(Double.MAX_VALUE);
 
         ScrollPane scroll = new ScrollPane(contenedorTarjetas);
@@ -204,9 +242,12 @@ public class TareasView {
         for (Actividad act : controller.getTareasPorEstado("EN_PROCESO")) {
             VBox card = crearTarjetaTarea(act, "COMPLETADO", "Finalizar ✅", "#2E7D32");
             Button btnRegresar = new Button("◀ Pausar");
-            btnRegresar.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-cursor: hand; -fx-font-size: 11px;");
+            btnRegresar.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-cursor: hand;");
+            btnRegresar.getStyleClass().add("lbl-text-pequeno");
             btnRegresar.setOnAction(e -> { controller.moverTarea(act, "PENDIENTE"); cargarTareasEnTablero(); e.consume(); });
-            ((HBox)card.getChildren().get(2)).getChildren().add(0, btnRegresar);
+            
+            // CORRECCIÓN DEL CRASH: El footer ahora está en la posición 3
+            ((HBox)card.getChildren().get(3)).getChildren().add(0, btnRegresar);
             
             ((VBox)colEnProceso.getUserData()).getChildren().add(card);
         }
@@ -216,11 +257,14 @@ public class TareasView {
             
             if (controller.isTareaCaducada(act)) {
                 card.setStyle("-fx-background-color: " + colorBgBase + "; -fx-background-radius: 10; -fx-border-color: #888888; -fx-border-radius: 10; -fx-border-width: 1; -fx-opacity: 0.7;");
-                ((Label)card.getChildren().get(1)).setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #888888; -fx-strikethrough: true;");
-                card.getChildren().remove(2); 
+                ((Label)card.getChildren().get(1)).setStyle("-fx-font-weight: bold; -fx-text-fill: #888888; -fx-strikethrough: true;");
+                
+                // CORRECCIÓN DEL CRASH: El footer ahora está en la posición 3
+                card.getChildren().remove(3); 
                 
                 Label lblCaducada = new Label("❌ Tarea Caducada");
-                lblCaducada.setStyle("-fx-text-fill: #D32F2F; -fx-font-weight: bold; -fx-font-size: 11px;");
+                lblCaducada.setStyle("-fx-text-fill: #D32F2F; -fx-font-weight: bold;");
+                lblCaducada.getStyleClass().add("lbl-text-pequeno");
                 card.getChildren().add(lblCaducada);
             } else {
                 card.setOpacity(0.6); 
@@ -235,20 +279,26 @@ public class TareasView {
         card.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 10; -fx-border-color: " + colorBorder + "; -fx-border-radius: 10; -fx-border-width: 1; -fx-cursor: hand;");
 
         Label lblMateria = new Label(tarea.getMateria());
-        lblMateria.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-background-color: " + colorFuerte + "20; -fx-padding: 3 8; -fx-background-radius: 10;");
+        lblMateria.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-background-color: " + colorFuerte + "20; -fx-padding: 3 8; -fx-background-radius: 10;");
+        lblMateria.getStyleClass().add("lbl-text-pequeno");
 
         Label lblTitulo = new Label(tarea.getNombre());
-        lblTitulo.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: " + colorTextMain + "; -fx-wrap-text: true;");
+        lblTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-wrap-text: true;");
+        lblTitulo.getStyleClass().add("lbl-text-normal");
 
-        Label lblVence = new Label("Vence a las " + tarea.getHoraVencimiento());
-        lblVence.setStyle("-fx-font-size: 12px; -fx-text-fill: " + colorTextMuted + ";");
+        String tFecha = (tarea.getFecha() != null) ? tarea.getFecha().toString() : "---";
+        String tHora = (tarea.getHoraVencimiento() != null) ? tarea.getHoraVencimiento().toString() : "---";
+        Label lblVence = new Label("Vence " + tFecha + " a las " + tHora);
+        lblVence.setStyle("-fx-text-fill: " + colorTextMuted + ";");
+        lblVence.getStyleClass().add("lbl-text-pequeno");
 
         HBox footer = new HBox(10);
         footer.setAlignment(Pos.CENTER_RIGHT);
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button btnMover = new Button(textoBoton);
-        btnMover.setStyle("-fx-background-color: " + colorBtn + "; -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand;");
+        btnMover.setStyle("-fx-background-color: " + colorBtn + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand;");
+        btnMover.getStyleClass().add("lbl-text-pequeno");
         
         btnMover.setOnAction(e -> {
             controller.moverTarea(tarea, estadoDestino);
@@ -257,10 +307,12 @@ public class TareasView {
         });
 
         footer.getChildren().addAll(spacer, btnMover);
-        card.getChildren().addAll(lblMateria, lblTitulo, footer);
+        
+        // Elementos agregados a la tarjeta (4 en total)
+        card.getChildren().addAll(lblMateria, lblTitulo, lblVence, footer);
 
         card.setOnMouseClicked(e -> {
-            if (controller.isTareaCaducada(tarea) && tarea.getEstado().equals("COMPLETADO")) {
+            if (controller.isTareaCaducada(tarea) && "COMPLETADO".equals(tarea.getEstado())) {
                 NotificacionManager.mostrarNotificacion("Acceso Denegado", "Esta tarea ya caducó y ha sido cerrada por el profesor.", "URGENTE");
             } else {
                 mostrarVentanaDetallesTeams(tarea);
@@ -294,7 +346,7 @@ public class TareasView {
         Region spacerHeader = new Region(); HBox.setHgrow(spacerHeader, Priority.ALWAYS);
         
         Label lblDevolucion = new Label("Estado: En curso");
-        lblDevolucion.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-style: italic; -fx-font-size: 12px;");
+        lblDevolucion.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-style: italic;");
         
         Button btnEntregar = new Button("Entregar Tarea");
         btnEntregar.setStyle("-fx-background-color: #5C5FC8; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 4; -fx-cursor: hand;");
@@ -315,10 +367,14 @@ public class TareasView {
         
         VBox infoTitulo = new VBox(5);
         Label lblTitle = new Label(tarea.getNombre());
-        lblTitle.setStyle("-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
-        // CORRECCIÓN: Usamos getFecha() en la vista
-        Label lblSubtitle = new Label("Vence el " + tarea.getFecha() + " a las " + tarea.getHoraVencimiento() + " • Se permiten varios envíos");
-        lblSubtitle.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px;");
+        lblTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
+        lblTitle.getStyleClass().add("lbl-titulo-banner");
+
+        String tFecha = (tarea.getFecha() != null) ? tarea.getFecha().toString() : "---";
+        String tHora = (tarea.getHoraVencimiento() != null) ? tarea.getHoraVencimiento().toString() : "---";
+        Label lblSubtitle = new Label("Vence el " + tFecha + " a las " + tHora + " • Se permiten varios envíos");
+        lblSubtitle.setStyle("-fx-text-fill: " + colorTextMuted + ";");
+        lblSubtitle.getStyleClass().add("lbl-text-pequeno");
         infoTitulo.getChildren().addAll(lblTitle, lblSubtitle);
 
         VBox miTrabajoBox = new VBox(10);
@@ -343,7 +399,7 @@ public class TareasView {
         miTrabajoBox.getChildren().addAll(lblMiTrabajo, archivoBox, accionesTrabajo);
 
         VBox puntosBox = new VBox(5);
-        Label lblPtsTitulo = new Label("Puntos"); lblPtsTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 12px;");
+        Label lblPtsTitulo = new Label("Puntos"); lblPtsTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
         Label lblPtsValor = new Label("Sin calificar / 10"); lblPtsValor.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 16px;");
         puntosBox.getChildren().addAll(lblPtsTitulo, lblPtsValor);
 
@@ -354,7 +410,7 @@ public class TareasView {
 
         VBox instruccionesBox = new VBox(10);
         Label lblInstTitulo = new Label("Instrucciones");
-        lblInstTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 14px; -fx-border-color: " + colorBorder + "; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;");
+        lblInstTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-border-color: " + colorBorder + "; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;");
         lblInstTitulo.setMaxWidth(Double.MAX_VALUE);
         Label lblDescReal = new Label(tarea.getDescripcion());
         lblDescReal.setStyle("-fx-text-fill: " + colorTextMain + "; -fx-wrap-text: true; -fx-line-spacing: 5px;");
@@ -362,7 +418,7 @@ public class TareasView {
 
         VBox refBox = new VBox(10);
         Label lblRefTitulo = new Label("Materiales de referencia");
-        lblRefTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 14px; -fx-border-color: " + colorBorder + "; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;");
+        lblRefTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-border-color: " + colorBorder + "; -fx-border-width: 0 0 1 0; -fx-padding: 0 0 5 0;");
         lblRefTitulo.setMaxWidth(Double.MAX_VALUE);
         
         VBox listaMateriales = new VBox(8);
