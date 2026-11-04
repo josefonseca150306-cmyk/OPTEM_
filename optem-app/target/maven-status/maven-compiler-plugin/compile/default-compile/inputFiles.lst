@@ -1,3 +1,4 @@
+c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\AgendaMaestroView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\AjustesView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\PomodoroView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\ReinscripcionView.java
@@ -13,8 +14,10 @@ c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controll
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\logic\ActividadManager.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\AgendaController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\DashboardController.java
+c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\TareasMaestroView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\ChatBotController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\LogrosController.java
+c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\InicioMaestroView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\LogrosView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\NotasController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\logic\NotificacionManager.java
@@ -33,6 +36,7 @@ c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\database
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\ReunionesController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\AgendaView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\GruposMaestroController.java
+c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\ReunionesMaestroView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\LoginController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\SplashController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\AjustesController.java

@@ -2,63 +2,82 @@ package com.optem.ui;
 
 import java.util.prefs.Preferences;
 
+import com.optem.controllers.AjustesController;
 import com.optem.controllers.GruposMaestroController;
+import com.optem.logic.NotificacionManager;
 
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.stage.Window;
 
 public class GruposMaestroView extends VBox {
 
     private final GruposMaestroController controller = new GruposMaestroController();
     private VBox listaGrupos;
     
-    // Variables para Modo Oscuro y Color de Acento
     private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder;
 
     public GruposMaestroView() {
         leerPreferencias();
-        this.setPadding(new Insets(30));
+        this.setPadding(new Insets(30, 40, 30, 40));
         this.setSpacing(25);
         this.setStyle("-fx-background-color: transparent;");
 
-        // --- CABECERA ESTANDARIZADA ---
-        Label titulo = new Label("Gestión de Grupos y Clases");
+        // --- 1. CABECERA ---
+        HBox header = new HBox(15);
+        header.setAlignment(Pos.CENTER_LEFT);
+        
+        VBox titleBox = new VBox(5);
+        Label titulo = new Label("👥 Gestión de Grupos y Clases");
         titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
-        Label subtitulo = new Label("Administra tus asignaturas, genera códigos de acceso o inscribe alumnos manualmente.");
+        Label subtitulo = new Label("Administra tus asignaturas, genera códigos de acceso o inscribe alumnos.");
         subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
+        titleBox.getChildren().addAll(titulo, subtitulo);
+
+        Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button btnNuevoGrupo = new Button("➕ Crear Nuevo Grupo");
         btnNuevoGrupo.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand;");
-        btnNuevoGrupo.setOnAction(e -> abrirModalCrearGrupo());
+        btnNuevoGrupo.setOnAction(e -> abrirModalCrearGrupo(this.getScene().getWindow()));
 
-        HBox header = new HBox(15, new VBox(5, titulo, subtitulo), new Region(), btnNuevoGrupo);
-        HBox.setHgrow(header.getChildren().get(1), Priority.ALWAYS);
-        header.setAlignment(Pos.CENTER_LEFT);
+        header.getChildren().addAll(titleBox, spacer, btnNuevoGrupo);
 
-        // --- LISTA DE GRUPOS ACTIVOS ---
+        // --- 2. MÉTRICAS RÁPIDAS ---
+        HBox metricasHeader = new HBox(20);
+        metricasHeader.getChildren().addAll(
+            crearMetricaRapida("Total de Grupos Activos", "2"),
+            crearMetricaRapida("Alumnos Totales", "42")
+        );
+
+        // --- 3. LISTA DE GRUPOS ACTIVOS ---
         listaGrupos = new VBox(15);
         
-        // Mocks de ejemplo (Aquí se cargarán desde la BD después)
-        agregarTarjetaGrupo("Ingeniería de Software", "Lun/Mié 13:00 - 15:00", controller.generarCodigoClase(), 24);
-        agregarTarjetaGrupo("Bases de Datos Avanzadas", "Mar/Jue 07:00 - 09:00", controller.generarCodigoClase(), 18);
+        // Mocks de ejemplo
+        agregarTarjetaGrupo("Ingeniería de Software", "Lun/Mié 13:00 - 15:00", controller.generarCodigoClase(), 24, 8.5);
+        agregarTarjetaGrupo("Bases de Datos Avanzadas", "Mar/Jue 07:00 - 09:00", controller.generarCodigoClase(), 18, 7.2);
 
         ScrollPane scroll = new ScrollPane(listaGrupos);
         scroll.setFitToWidth(true);
         scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
-        this.getChildren().addAll(header, scroll);
+        this.getChildren().addAll(header, metricasHeader, scroll);
     }
 
     private void leerPreferencias() {
@@ -74,105 +93,231 @@ public class GruposMaestroView extends VBox {
         colorBorder = isDark ? "#333333" : "#e2e8f0";
     }
 
-    private void agregarTarjetaGrupo(String materia, String horario, String codigoAcceso, int totalAlumnos) {
-        VBox card = new VBox(10);
-        card.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-padding: 20; -fx-background-radius: 12; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 2, 2);");
+    private VBox crearMetricaRapida(String titulo, String valor) {
+        VBox box = new VBox(5);
+        box.setPadding(new Insets(15, 25, 15, 25));
+        box.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8; -fx-background-radius: 8;");
+        Label lblVal = new Label(valor);
+        lblVal.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: " + colorFuerte + ";");
+        Label lblTit = new Label(titulo);
+        lblTit.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px;");
+        box.getChildren().addAll(lblVal, lblTit);
+        return box;
+    }
 
+    private void agregarTarjetaGrupo(String materia, String horario, String codigoAcceso, int totalAlumnos, double promedioGrupo) {
+        VBox card = new VBox(15);
+        card.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-padding: 25; -fx-background-radius: 12; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 2, 2);");
+
+        HBox topFila = new HBox();
+        topFila.setAlignment(Pos.CENTER_LEFT);
+        
+        VBox info = new VBox(5);
         Label lblMateria = new Label("📚 " + materia);
         lblMateria.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: " + colorTextMain + ";");
-        
         Label lblInfo = new Label("Horario: " + horario + "  |  Alumnos inscritos: " + totalAlumnos);
         lblInfo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
+        info.getChildren().addAll(lblMateria, lblInfo);
 
+        Region sp1 = new Region(); HBox.setHgrow(sp1, Priority.ALWAYS);
+
+        VBox boxPromedio = new VBox(3);
+        boxPromedio.setAlignment(Pos.CENTER_RIGHT);
+        Label lblPromTit = new Label("Promedio General");
+        lblPromTit.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 11px;");
+        
+        HBox barCaja = new HBox(8);
+        barCaja.setAlignment(Pos.CENTER_RIGHT);
+        ProgressBar pb = new ProgressBar(promedioGrupo / 10.0);
+        pb.setPrefWidth(80);
+        pb.setStyle("-fx-accent: " + (promedioGrupo >= 8 ? "#10b981" : promedioGrupo >= 6 ? "#f59e0b" : "#ef4444") + "; -fx-control-inner-background: " + colorBgBase + ";");
+        Label lblPromVal = new Label(String.valueOf(promedioGrupo));
+        lblPromVal.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
+        barCaja.getChildren().addAll(pb, lblPromVal);
+        
+        boxPromedio.getChildren().addAll(lblPromTit, barCaja);
+
+        topFila.getChildren().addAll(info, sp1, boxPromedio);
+
+        // --- FILA INFERIOR ---
         HBox actionBox = new HBox(15);
         actionBox.setAlignment(Pos.CENTER_LEFT);
+        actionBox.setStyle("-fx-padding: 15 0 0 0; -fx-border-color: " + colorBorder + "; -fx-border-width: 1 0 0 0;");
 
-        Label lblCodigo = new Label("Código de clase: " + codigoAcceso);
-        lblCodigo.setStyle("-fx-background-color: " + colorBgBase + "; -fx-padding: 8 15; -fx-background-radius: 8; -fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8;");
+        Label lblCodigoTag = new Label("Código:");
+        lblCodigoTag.setStyle("-fx-text-fill: " + colorTextMuted + ";");
+        Label lblCodigoVal = new Label(codigoAcceso);
+        lblCodigoVal.setStyle("-fx-background-color: " + colorBgBase + "; -fx-padding: 6 12; -fx-background-radius: 6; -fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6;");
 
-        Button btnInscribirManual = new Button("👤 Añadir Alumno Manual");
-        btnInscribirManual.setStyle("-fx-background-color: transparent; -fx-border-color: " + colorFuerte + "; -fx-border-radius: 8; -fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold; -fx-padding: 8 15; -fx-cursor: hand;");
-        btnInscribirManual.setOnAction(e -> abrirModalAgregarAlumnoManual(materia));
+        Button btnInscribirManual = new Button("👤 Añadir Alumno");
+        btnInscribirManual.setStyle("-fx-background-color: transparent; -fx-border-color: " + colorFuerte + "; -fx-border-radius: 6; -fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold; -fx-padding: 6 12; -fx-cursor: hand;");
+        btnInscribirManual.setOnAction(e -> abrirModalAgregarAlumnoManual(materia, card.getScene().getWindow()));
 
-        Button btnVerAlumnos = new Button("Ver lista de alumnos");
-        btnVerAlumnos.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-underline: true; -fx-cursor: hand;");
+        Region sp2 = new Region(); HBox.setHgrow(sp2, Priority.ALWAYS);
 
-        actionBox.getChildren().addAll(lblCodigo, btnInscribirManual, new Region(), btnVerAlumnos);
-        HBox.setHgrow(actionBox.getChildren().get(2), Priority.ALWAYS);
+        // Botón de Opciones
+        Button btnOpciones = new Button("Opciones ⚙");
+        btnOpciones.setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6; -fx-padding: 6 15; -fx-cursor: hand;");
+        
+        // ========================================================
+        // FIX: MENU FLOTANTE PERSONALIZADO (A PRUEBA DE FALLOS CSS)
+        // ========================================================
+        Popup popup = new Popup();
+        popup.setAutoHide(true);
+        
+        VBox menuBox = new VBox(2);
+        menuBox.setPadding(new Insets(5));
+        menuBox.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorBorder + "; -fx-border-width: 1; -fx-border-radius: 8; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 2, 2);");
+        
+        Button btnLista = crearBotonOpcion("👥 Ver lista completa de alumnos");
+        btnLista.setOnAction(e -> { 
+            popup.hide(); 
+            NotificacionManager.mostrarNotificacion("Gestión de Alumnos", "Redirigiendo a la lista de " + materia + "...", "INFO"); 
+        });
+        
+        Button btnHorario = crearBotonOpcion("🕒 Editar Horario");
+        btnHorario.setOnAction(e -> { 
+            popup.hide(); 
+            NotificacionManager.mostrarNotificacion("Edición", "El horario de " + materia + " ahora es editable.", "INFO"); 
+        });
+        
+        Button btnArchivar = crearBotonOpcion("📦 Archivar Grupo");
+        btnArchivar.setOnAction(e -> { 
+            popup.hide(); 
+            NotificacionManager.mostrarNotificacion("Archivo", "El grupo " + materia + " ha sido archivado.", "INFO"); 
+        });
+        
+        menuBox.getChildren().addAll(btnLista, btnHorario, btnArchivar);
+        popup.getContent().add(menuBox);
 
-        card.getChildren().addAll(lblMateria, lblInfo, actionBox);
+        btnOpciones.setOnAction(e -> {
+            Bounds bounds = btnOpciones.localToScreen(btnOpciones.getBoundsInLocal());
+            if (bounds != null) {
+                // Muestra el menú justo debajo del botón
+                popup.show(btnOpciones, bounds.getMinX(), bounds.getMaxY() + 5);
+            }
+        });
+
+        actionBox.getChildren().addAll(lblCodigoTag, lblCodigoVal, btnInscribirManual, sp2, btnOpciones);
+
+        card.getChildren().addAll(topFila, actionBox);
         listaGrupos.getChildren().add(card);
     }
 
-    private void abrirModalCrearGrupo() {
+    // Método para crear botones del menú desplegable que respetan el modo oscuro
+    private Button crearBotonOpcion(String texto) {
+        Button btn = new Button(texto);
+        btn.setPrefWidth(220);
+        btn.setAlignment(Pos.CENTER_LEFT);
+        btn.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 13px; -fx-padding: 8 12; -fx-cursor: hand; -fx-background-radius: 6;");
+        
+        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 8 12; -fx-cursor: hand; -fx-background-radius: 6;"));
+        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 13px; -fx-padding: 8 12; -fx-cursor: hand; -fx-background-radius: 6;"));
+        
+        return btn;
+    }
+
+    private void abrirModalCrearGrupo(Window owner) {
         Stage modal = new Stage(); 
         modal.setTitle("Crear Nuevo Grupo");
         modal.initModality(Modality.APPLICATION_MODAL);
+        modal.initOwner(owner);
+        modal.initStyle(StageStyle.UNDECORATED);
 
         VBox root = new VBox(20);
         root.setPadding(new Insets(30));
-        root.setStyle("-fx-background-color: " + colorBgBase + ";");
+        
+        String fontPref = new AjustesController("").getPrefString("PREF_FONT_SIZE", "Normal");
+        String fontSize = fontPref.equals("Pequeño") ? "12px" : fontPref.equals("Grande") ? "17px" : "14px";
+        root.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorFuerte + "; -fx-border-width: 2; -fx-background-radius: 12; -fx-border-radius: 12; -fx-font-size: " + fontSize + ";");
 
         Label lblTitle = new Label("Crear Nueva Clase");
         lblTitle.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
 
         TextField txtNombre = new TextField();
         txtNombre.setPromptText("Nombre de la materia (Ej. Álgebra Lineal)");
-        txtNombre.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-padding: 10; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8; -fx-text-fill: " + colorTextMain + ";");
+        txtNombre.setStyle("-fx-background-color: " + colorBgBase + "; -fx-padding: 10; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8; -fx-text-fill: " + colorTextMain + ";");
 
         TextField txtHorario = new TextField();
         txtHorario.setPromptText("Horario (Ej. Mar/Jue 11:00 - 13:00)");
         txtHorario.setStyle(txtNombre.getStyle());
 
+        HBox botones = new HBox(15);
+        botones.setAlignment(Pos.CENTER_RIGHT);
+        
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-cursor: hand;");
+        btnCancelar.setOnAction(e -> modal.close());
+
         Button btnGuardar = new Button("Generar Clase y Código");
         btnGuardar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand;");
-        btnGuardar.setMaxWidth(Double.MAX_VALUE);
-
+        
         btnGuardar.setOnAction(e -> {
             boolean exito = controller.crearGrupo(txtNombre.getText(), txtHorario.getText());
             if (exito) {
-                agregarTarjetaGrupo(txtNombre.getText(), txtHorario.getText(), controller.generarCodigoClase(), 0);
+                agregarTarjetaGrupo(txtNombre.getText(), txtHorario.getText(), controller.generarCodigoClase(), 0, 0.0);
+                NotificacionManager.mostrarNotificacion("Grupo Creado", "La clase " + txtNombre.getText() + " se generó con éxito.", "INFO");
                 modal.close();
             }
         });
 
-        root.getChildren().addAll(lblTitle, txtNombre, txtHorario, btnGuardar);
-        Scene scene = new Scene(root, 400, 300);
-        if (this.getScene() != null) scene.getStylesheets().addAll(this.getScene().getStylesheets());
+        botones.getChildren().addAll(btnCancelar, btnGuardar);
+        root.getChildren().addAll(lblTitle, txtNombre, txtHorario, botones);
+        
+        Scene scene = new Scene(root, 400, 280);
+        scene.setFill(Color.TRANSPARENT);
         modal.setScene(scene);
         modal.show();
+        modal.setX(owner.getX() + (owner.getWidth() - modal.getWidth()) / 2);
+        modal.setY(owner.getY() + (owner.getHeight() - modal.getHeight()) / 2);
     }
 
-    private void abrirModalAgregarAlumnoManual(String materia) {
+    private void abrirModalAgregarAlumnoManual(String materia, Window owner) {
         Stage modal = new Stage(); 
         modal.setTitle("Añadir Alumno");
         modal.initModality(Modality.APPLICATION_MODAL);
+        modal.initOwner(owner);
+        modal.initStyle(StageStyle.UNDECORATED);
 
         VBox root = new VBox(20);
         root.setPadding(new Insets(30));
-        root.setStyle("-fx-background-color: " + colorBgBase + ";");
+        
+        String fontPref = new AjustesController("").getPrefString("PREF_FONT_SIZE", "Normal");
+        String fontSize = fontPref.equals("Pequeño") ? "12px" : fontPref.equals("Grande") ? "17px" : "14px";
+        root.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorFuerte + "; -fx-border-width: 2; -fx-background-radius: 12; -fx-border-radius: 12; -fx-font-size: " + fontSize + ";");
 
         Label lblTitle = new Label("Añadir alumno a: " + materia);
         lblTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
 
         TextField txtBusqueda = new TextField();
         txtBusqueda.setPromptText("Número de cuenta o correo institucional...");
-        txtBusqueda.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-padding: 10; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8; -fx-text-fill: " + colorTextMain + ";");
+        txtBusqueda.setStyle("-fx-background-color: " + colorBgBase + "; -fx-padding: 10; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8; -fx-text-fill: " + colorTextMain + ";");
+
+        HBox botones = new HBox(15);
+        botones.setAlignment(Pos.CENTER_RIGHT);
+        
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-cursor: hand;");
+        btnCancelar.setOnAction(e -> modal.close());
 
         Button btnBuscar = new Button("Buscar e Inscribir");
         btnBuscar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand;");
-        btnBuscar.setMaxWidth(Double.MAX_VALUE);
-
+        
         btnBuscar.setOnAction(e -> {
             if (controller.agregarAlumnoManual(txtBusqueda.getText())) {
+                NotificacionManager.mostrarNotificacion("Alumno Inscrito", "Se ha añadido al alumno exitosamente a " + materia, "INFO");
                 modal.close();
             }
         });
 
-        root.getChildren().addAll(lblTitle, txtBusqueda, btnBuscar);
-        Scene scene = new Scene(root, 400, 250);
-        if (this.getScene() != null) scene.getStylesheets().addAll(this.getScene().getStylesheets());
+        botones.getChildren().addAll(btnCancelar, btnBuscar);
+        root.getChildren().addAll(lblTitle, txtBusqueda, botones);
+        
+        Scene scene = new Scene(root, 400, 220);
+        scene.setFill(Color.TRANSPARENT);
         modal.setScene(scene);
         modal.show();
+        modal.setX(owner.getX() + (owner.getWidth() - modal.getWidth()) / 2);
+        modal.setY(owner.getY() + (owner.getHeight() - modal.getHeight()) / 2);
     }
 }

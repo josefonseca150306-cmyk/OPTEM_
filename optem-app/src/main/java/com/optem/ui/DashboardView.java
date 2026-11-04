@@ -80,7 +80,7 @@ public class DashboardView {
     private Button btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdConfig;
 
     private BorderPane root;
-    private ScrollPane scrollAlumnoMaestro;
+    private ScrollPane scrollAlumno;
     
     private double xOffset = 0;
     private double yOffset = 0;
@@ -97,7 +97,6 @@ public class DashboardView {
         String nombreEstudianteActivo = controller.getNombreEstudiante();
         String colorFuerte = controller.getColorFuerte();
         boolean animacionesActivas = controller.isAnimacionesActivas();
-        
         boolean wasShowing = stage.isShowing();
         
         StackPane mainRoot = new StackPane();
@@ -105,25 +104,16 @@ public class DashboardView {
         
         if (!wasShowing) { stage.initStyle(StageStyle.UNDECORATED); }
         
-        // ==================================================
-        // BARRA DE TÍTULO PROTEGIDA (Nunca se hace pequeña)
-        // ==================================================
         HBox titleBar = new HBox(15); 
         titleBar.setAlignment(Pos.CENTER_RIGHT); 
         titleBar.setPadding(new Insets(0, 15, 0, 0));
         titleBar.setStyle("-fx-background-color: -color-bg-panel; -fx-border-color: -color-border; -fx-border-width: 0 0 1 0;");
-        
-        // Altura estricta para evitar que la ventana se coma los botones al minimizar
         titleBar.setMinHeight(40);
         titleBar.setPrefHeight(40);
         
         Button btnMaxim = new Button(isMaximized ? "🗗" : "🗖");
 
-        titleBar.setOnMousePressed(event -> { 
-            xOffset = event.getSceneX(); 
-            yOffset = event.getSceneY(); 
-        });
-        
+        titleBar.setOnMousePressed(event -> { xOffset = event.getSceneX(); yOffset = event.getSceneY(); });
         titleBar.setOnMouseDragged(event -> { 
             if (isMaximized) {
                 isMaximized = false;
@@ -134,7 +124,6 @@ public class DashboardView {
                 double h = bounds.getHeight() * 0.85;
                 stage.setWidth(w);
                 stage.setHeight(h);
-                // Centramos el ratón en la barra al arrastrar desde pantalla completa
                 xOffset = w / 2;
                 yOffset = 20; 
             }
@@ -152,25 +141,16 @@ public class DashboardView {
         btnMaxim.setStyle(btnControlStyle);
         btnMaxim.setOnMouseEntered(e -> btnMaxim.setStyle(btnControlStyle + btnControlHover)); btnMaxim.setOnMouseExited(e -> btnMaxim.setStyle(btnControlStyle));
         btnMaxim.setOnAction(e -> {
-            Screen screen = Screen.getPrimary(); 
-            Rectangle2D bounds = screen.getVisualBounds();
+            Screen screen = Screen.getPrimary(); Rectangle2D bounds = screen.getVisualBounds();
             if (isMaximized) {
-                // Cálculo exacto del tamaño de ventana restaurada
-                double w = bounds.getWidth() * 0.85;
-                double h = bounds.getHeight() * 0.85;
-                stage.setWidth(w); 
-                stage.setHeight(h);
-                stage.setX(bounds.getMinX() + (bounds.getWidth() - w) / 2);
-                stage.setY(bounds.getMinY() + (bounds.getHeight() - h) / 2);
-                isMaximized = false; 
-                btnMaxim.setText("🗖"); 
+                double w = bounds.getWidth() * 0.85; double h = bounds.getHeight() * 0.85;
+                stage.setWidth(w); stage.setHeight(h);
+                stage.setX(bounds.getMinX() + (bounds.getWidth() - w) / 2); stage.setY(bounds.getMinY() + (bounds.getHeight() - h) / 2);
+                isMaximized = false; btnMaxim.setText("🗖"); 
             } else {
-                stage.setX(bounds.getMinX()); 
-                stage.setY(bounds.getMinY()); 
-                stage.setWidth(bounds.getWidth()); 
-                stage.setHeight(bounds.getHeight());
-                isMaximized = true; 
-                btnMaxim.setText("🗗");
+                stage.setX(bounds.getMinX()); stage.setY(bounds.getMinY()); 
+                stage.setWidth(bounds.getWidth()); stage.setHeight(bounds.getHeight());
+                isMaximized = true; btnMaxim.setText("🗗");
             }
         });
 
@@ -180,7 +160,6 @@ public class DashboardView {
         
         titleBar.getChildren().addAll(btnMinimizar, btnMaxim, btnCerrar);
 
-        // --- MENÚ LATERAL ---
         VBox sidebar = new VBox(10);
         sidebar.setPrefWidth(EXPANDED_WIDTH); sidebar.setMinWidth(COLLAPSED_WIDTH); sidebar.setMaxWidth(EXPANDED_WIDTH);
         sidebar.setPadding(new Insets(15, 20, 15, 20));
@@ -221,26 +200,50 @@ public class DashboardView {
             btnAdConfig = createMenuButton("⚙", "Configuración Sistema"); btnAdConfig.setOnAction(e -> { root.setCenter(new ScrollPane(adminViews.getVistaConfiguracion())); actualizarSeleccionMenu(btnAdConfig); });
             menuButtonsBox.getChildren().addAll(btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdConfig);
             btnAdStats.fire();
-        } else {
-            btnInicio = createMenuButton("🏠", "Inicio"); btnInicio.setOnAction(e -> { root.setCenter(scrollAlumnoMaestro); actualizarSeleccionMenu(btnInicio); });
-            btnAgenda = createMenuButton("📅", "Mi Agenda"); btnAgenda.setOnAction(e -> { try{ root.setCenter(new AgendaView().getView()); actualizarSeleccionMenu(btnAgenda); }catch(Exception ex){} });
+        } 
+        else if (rol.equals("MAESTRO")) {
+            btnInicio = createMenuButton("🏠", "Inicio"); 
+            btnInicio.setOnAction(e -> { root.setCenter(new InicioMaestroView().getView()); actualizarSeleccionMenu(btnInicio); });
+            
+            btnAgenda = createMenuButton("📅", "Mi Agenda"); 
+            btnAgenda.setOnAction(e -> { try { root.setCenter(new AgendaMaestroView().getView()); actualizarSeleccionMenu(btnAgenda); } catch(Exception ex) {} });
+            
             btnNotas = createMenuButton("📝", "Notas"); btnNotas.setOnAction(e -> { root.setCenter(new NotasView().getView()); actualizarSeleccionMenu(btnNotas); });
-            btnTareas = createMenuButton("✅", "Tareas"); btnTareas.setOnAction(e -> { root.setCenter(new TareasView().getView()); actualizarSeleccionMenu(btnTareas); });
-            btnReuniones = createMenuButton("🎥", "Reuniones"); btnReuniones.setOnAction(e -> { root.setCenter(new ReunionesView().getView()); actualizarSeleccionMenu(btnReuniones); });
+            
+            btnTareas = createMenuButton("✅", "Tareas"); 
+            btnTareas.setOnAction(e -> { root.setCenter(new TareasMaestroView().getView()); actualizarSeleccionMenu(btnTareas); });
+            
+            // --- NUEVO PANEL DE REUNIONES PARA EL MAESTRO ---
+            btnReuniones = createMenuButton("🎥", "Reuniones"); 
+            btnReuniones.setOnAction(e -> { root.setCenter(new ReunionesMaestroView().getView()); actualizarSeleccionMenu(btnReuniones); });
+            
+            btnGrupos = createMenuButton("👥", "Mis Grupos"); btnGrupos.setOnAction(e -> { root.setCenter(new GruposMaestroView()); actualizarSeleccionMenu(btnGrupos); });
             btnPomodoro = createMenuButton("⏱", "Pomodoro"); btnPomodoro.setOnAction(e -> { root.setCenter(new PomodoroView()); actualizarSeleccionMenu(btnPomodoro); });
             btnLogros = createMenuButton("🏆", "Logros"); btnLogros.setOnAction(e -> { root.setCenter(new LogrosView()); actualizarSeleccionMenu(btnLogros); });
             btnAjustes = createMenuButton("⚙", "Ajustes"); btnAjustes.setOnAction(e -> { root.setCenter(new AjustesView(themeUpdater, correoUsuario).getView()); actualizarSeleccionMenu(btnAjustes); });
 
-            if (rol.equals("MAESTRO")) {
-                btnGrupos = createMenuButton("👥", "Mis Grupos"); btnGrupos.setOnAction(e -> { root.setCenter(new GruposMaestroView()); actualizarSeleccionMenu(btnGrupos); });
-                menuButtonsBox.getChildren().addAll(btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnGrupos, btnPomodoro, btnLogros, btnAjustes);
-            } else {
-                btnActividades = createMenuButton("🎯", "Actividades"); btnActividades.setOnAction(e -> { root.setCenter(new ActividadesView()); actualizarSeleccionMenu(btnActividades); });
-                btnReinscripcion = createMenuButton("📑", "Reinscripción"); btnReinscripcion.setOnAction(e -> { root.setCenter(new ReinscripcionView()); actualizarSeleccionMenu(btnReinscripcion); });
-                menuButtonsBox.getChildren().addAll(btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnActividades, btnPomodoro, btnLogros, btnReinscripcion, btnAjustes);
-            }
-            construirInicioClasico(animacionesActivas, colorFuerte, stage);
+            menuButtonsBox.getChildren().addAll(btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnGrupos, btnPomodoro, btnLogros, btnAjustes);
             btnInicio.fire();
+        } 
+        else { // ESTUDIANTE
+            construirInicioEstudiante(animacionesActivas, colorFuerte, stage);
+            
+            btnInicio = createMenuButton("🏠", "Inicio"); btnInicio.setOnAction(e -> { root.setCenter(scrollAlumno); actualizarSeleccionMenu(btnInicio); });
+            btnAgenda = createMenuButton("📅", "Mi Agenda"); btnAgenda.setOnAction(e -> { try { root.setCenter(new AgendaView().getView()); actualizarSeleccionMenu(btnAgenda); } catch(Exception ex) {} });
+            btnNotas = createMenuButton("📝", "Notas"); btnNotas.setOnAction(e -> { root.setCenter(new NotasView().getView()); actualizarSeleccionMenu(btnNotas); });
+            btnTareas = createMenuButton("✅", "Tareas"); btnTareas.setOnAction(e -> { root.setCenter(new TareasView().getView()); actualizarSeleccionMenu(btnTareas); });
+            
+            // Reuniones del Estudiante (Original)
+            btnReuniones = createMenuButton("🎥", "Reuniones"); btnReuniones.setOnAction(e -> { root.setCenter(new ReunionesView().getView()); actualizarSeleccionMenu(btnReuniones); });
+            
+            btnActividades = createMenuButton("🎯", "Actividades"); btnActividades.setOnAction(e -> { root.setCenter(new ActividadesView()); actualizarSeleccionMenu(btnActividades); });
+            btnPomodoro = createMenuButton("⏱", "Pomodoro"); btnPomodoro.setOnAction(e -> { root.setCenter(new PomodoroView()); actualizarSeleccionMenu(btnPomodoro); });
+            btnLogros = createMenuButton("🏆", "Logros"); btnLogros.setOnAction(e -> { root.setCenter(new LogrosView()); actualizarSeleccionMenu(btnLogros); });
+            btnReinscripcion = createMenuButton("📑", "Reinscripción"); btnReinscripcion.setOnAction(e -> { root.setCenter(new ReinscripcionView()); actualizarSeleccionMenu(btnReinscripcion); });
+            btnAjustes = createMenuButton("⚙", "Ajustes"); btnAjustes.setOnAction(e -> { root.setCenter(new AjustesView(themeUpdater, correoUsuario).getView()); actualizarSeleccionMenu(btnAjustes); });
+
+            menuButtonsBox.getChildren().addAll(btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnActividades, btnPomodoro, btnLogros, btnReinscripcion, btnAjustes);
+            btnInicio.fire(); 
         }
 
         sidebar.getChildren().addAll(btnToggle, userBox, menuButtonsBox);
@@ -262,7 +265,6 @@ public class DashboardView {
 
         root.setLeft(sidebar); 
 
-        // Aseguramos que la barra de título nunca se aplaste
         VBox appLayout = new VBox(0, titleBar, root);
         VBox.setVgrow(root, Priority.ALWAYS);
         VBox.setVgrow(titleBar, Priority.NEVER);
@@ -303,7 +305,6 @@ public class DashboardView {
 
         StackPane.setAlignment(btnBurbujaIA, Pos.BOTTOM_RIGHT);
         StackPane.setMargin(btnBurbujaIA, new Insets(0, 30, 30, 0));
-
         StackPane.setAlignment(chatContainer, Pos.BOTTOM_RIGHT);
         StackPane.setMargin(chatContainer, new Insets(0, 30, 110, 0)); 
 
@@ -312,9 +313,7 @@ public class DashboardView {
 
         Scene scene = new Scene(mainRoot, 1300, 850);
         aplicarTemaGlobal(scene, correoUsuario);
-        
         configurarNavegacionPorTecladoGlobal(scene, stage);
-        
         stage.setScene(scene); 
         
         Platform.runLater(() -> { 
@@ -335,13 +334,13 @@ public class DashboardView {
         });
     }
     
-    private void construirInicioClasico(boolean animacionesActivas, String colorFuerte, Stage parentStage) {
+    private void construirInicioEstudiante(boolean animacionesActivas, String colorFuerte, Stage parentStage) {
         VBox mainContent = new VBox(25);
         mainContent.setPadding(new Insets(30, 45, 30, 45));
         mainContent.setStyle("-fx-background-color: -color-bg-base;");
-        scrollAlumnoMaestro = new ScrollPane(mainContent);
-        scrollAlumnoMaestro.setFitToWidth(true);
-        scrollAlumnoMaestro.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
+        scrollAlumno = new ScrollPane(mainContent);
+        scrollAlumno.setFitToWidth(true);
+        scrollAlumno.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
 
         Map<String, String> perfil = controller.getPerfilUsuario();
         String primerNombre = perfil.get("nombre_completo").split(" ")[0];
@@ -384,10 +383,8 @@ public class DashboardView {
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
         
         VBox clockContainer = new VBox(-5); clockContainer.setAlignment(Pos.CENTER_RIGHT);
-        
         Label lblClock = new Label(); 
         lblClock.setStyle("-fx-font-size: 42px; -fx-font-weight: bold; -fx-text-fill: white;"); 
-        
         Label lblDateGlass = new Label(); 
         lblDateGlass.setStyle("-fx-font-size: 16px; -fx-text-fill: rgba(255, 255, 255, 0.8);");
         
@@ -398,11 +395,9 @@ public class DashboardView {
         bannerContainer.setEffect(new DropShadow(15, 0, 8, Color.rgb(0,0,0,0.15)));
 
         GridPane galleryGrid = new GridPane(); galleryGrid.setHgap(25); galleryGrid.setVgap(25); galleryGrid.setAlignment(Pos.CENTER);
-        
         VBox cardNotas = createSectionCard("Notas", "Tus apuntes de clase", "/images/card_notes.jpg", -50); cardNotas.setOnMouseClicked(e -> { if(btnNotas!=null) btnNotas.fire(); });
         VBox cardAgenda = createSectionCard("Agenda", "Horario semanal", "/images/card_agenda.jpg", -140); cardAgenda.setOnMouseClicked(e -> { if(btnAgenda!=null) btnAgenda.fire(); });
         VBox cardTareas = createSectionCard("Tareas", "Lista de pendientes", "/images/card_tasks.jpg", -90); cardTareas.setOnMouseClicked(e -> { if(btnTareas!=null) btnTareas.fire(); });
-
         galleryGrid.add(cardNotas, 0, 0); galleryGrid.add(cardAgenda, 1, 0); galleryGrid.add(cardTareas, 2, 0);
 
         VBox materiasPane = new VBox(15); 
@@ -445,7 +440,6 @@ public class DashboardView {
         }
 
         materiasPane.getChildren().addAll(lblMateriasTitle, listaTarjetas);
-
         VBox institutionalFooter = createAnimatedShieldFooter(animacionesActivas);
         mainContent.getChildren().addAll(bannerContainer, galleryGrid, materiasPane, institutionalFooter);
     }
@@ -611,7 +605,6 @@ public class DashboardView {
     }
 
     private VBox createSectionCard(String title, String sub, String imgPath, double offsetY) {
-        // CORRECCIÓN: Se fuerzan tamaños exactos e inamovibles para las tarjetas (280x200)
         VBox card = new VBox(0); 
         card.setPrefSize(280, 200); 
         card.setMinSize(280, 200);
@@ -630,16 +623,11 @@ public class DashboardView {
                 iv.setPreserveRatio(true); 
                 iv.setFitWidth(280); 
                 iv.setLayoutY(offsetY); 
-                
                 Rectangle clip = new Rectangle(280, 120); 
-                clip.setArcWidth(30); 
-                clip.setArcHeight(30); 
-                imgContainer.setClip(clip); 
-                imgContainer.getChildren().add(iv); 
+                clip.setArcWidth(30); clip.setArcHeight(30); 
+                imgContainer.setClip(clip); imgContainer.getChildren().add(iv); 
             } 
-        } catch(Exception e) { 
-            imgContainer.setStyle("-fx-background-color: -color-bg-base; -fx-background-radius: 15 15 0 0;"); 
-        }
+        } catch(Exception e) { imgContainer.setStyle("-fx-background-color: -color-bg-base; -fx-background-radius: 15 15 0 0;"); }
         
         VBox info = new VBox(2); info.setPadding(new Insets(15)); Label t = new Label(title); t.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main;"); t.getStyleClass().add("lbl-text-normal"); Label s = new Label(sub); s.setStyle("-fx-text-fill: -color-text-muted;"); s.getStyleClass().add("lbl-text-pequeno"); info.getChildren().addAll(t, s); card.getChildren().addAll(imgContainer, info);
         ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), card); scaleIn.setToX(1.03); scaleIn.setToY(1.03); ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), card); scaleOut.setToX(1.0); scaleOut.setToY(1.0); card.setOnMouseEntered(e -> scaleIn.playFromStart()); card.setOnMouseExited(e -> scaleOut.playFromStart()); return card;
@@ -655,55 +643,33 @@ public class DashboardView {
         return f; 
     }
     
-    // =========================================================================
-    // LÓGICA DE ACCESIBILIDAD (SECUESTRO DE TECLA TAB)
-    // =========================================================================
     private void configurarNavegacionPorTecladoGlobal(Scene scene, Stage stage) {
         AjustesController ajCtrl = new AjustesController(correoActualGlobal);
-        
         scene.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
             teclasActivas.add(e.getCode());
-            
             if (ajCtrl.getPrefBoolean("PREF_ACC_KEYBOARD", false)) {
-                if (e.getCode() == KeyCode.TAB) { 
-                    btnToggle.fire(); 
-                    e.consume(); 
-                    return; 
-                }
-                if (e.getCode() == KeyCode.ENTER) { 
-                    ajCtrl.clickIzquierdoMouse(); 
-                    e.consume(); 
-                    return; 
-                }
+                if (e.getCode() == KeyCode.TAB) { btnToggle.fire(); e.consume(); return; }
+                if (e.getCode() == KeyCode.ENTER) { ajCtrl.clickIzquierdoMouse(); e.consume(); return; }
             }
-            
-            if (e.getCode() == KeyCode.F2 && ajCtrl.getPrefBoolean("PREF_ACC_VOICE", false)) {
-                mostrarAsistenteDeVoz(stage, ajCtrl.getColorFuerte());
-                e.consume();
-            }
+            if (e.getCode() == KeyCode.F2 && ajCtrl.getPrefBoolean("PREF_ACC_VOICE", false)) { mostrarAsistenteDeVoz(stage, ajCtrl.getColorFuerte()); e.consume(); }
         });
 
-        scene.addEventFilter(javafx.scene.input.KeyEvent.KEY_RELEASED, e -> {
-            teclasActivas.remove(e.getCode());
-        });
+        scene.addEventFilter(javafx.scene.input.KeyEvent.KEY_RELEASED, e -> { teclasActivas.remove(e.getCode()); });
 
         if (ratonTimer != null) ratonTimer.stop();
         ratonTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {
                 if (!ajCtrl.getPrefBoolean("PREF_ACC_KEYBOARD", false)) return;
-
                 if (teclasActivas.contains(KeyCode.LEFT) && teclasActivas.contains(KeyCode.RIGHT)) {
                     if (teclasActivas.contains(KeyCode.UP)) ajCtrl.scrollMouse(-1);
                     if (teclasActivas.contains(KeyCode.DOWN)) ajCtrl.scrollMouse(1);
                 } else {
-                    int dx = 0, dy = 0;
-                    int velocidad = 8; 
+                    int dx = 0, dy = 0; int velocidad = 8; 
                     if (teclasActivas.contains(KeyCode.UP)) dy -= velocidad;
                     if (teclasActivas.contains(KeyCode.DOWN)) dy += velocidad;
                     if (teclasActivas.contains(KeyCode.LEFT)) dx -= velocidad;
                     if (teclasActivas.contains(KeyCode.RIGHT)) dx += velocidad;
-                    
                     if (dx != 0 || dy != 0) { ajCtrl.moverCursorMouse(dx, dy); }
                 }
             }
@@ -713,23 +679,14 @@ public class DashboardView {
     
     private void mostrarAsistenteDeVoz(Stage owner, String colorFuerte) {
         Stage popup = new Stage(); popup.initOwner(owner); popup.initStyle(StageStyle.UNDECORATED);
-        
         VBox rootBox = new VBox(15); rootBox.setPadding(new Insets(25));
         rootBox.setStyle("-fx-background-color: -color-bg-panel; -fx-border-color: " + colorFuerte + "; -fx-border-width: 2; -fx-background-radius: 12; -fx-border-radius: 12;");
-        
-        Label lblTit = new Label("🎙 Te escucho...");
-        lblTit.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -color-text-main;");
-        
-        TextField txtComando = new TextField(); 
-        txtComando.setPromptText("Dicta tu comando...");
-        txtComando.setStyle("-fx-background-color: -color-bg-base; -fx-text-fill: -color-text-main; -fx-padding: 10;");
-        
-        Button btnEjecutar = new Button("Procesar Comando");
-        btnEjecutar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 6;");
+        Label lblTit = new Label("🎙 Te escucho..."); lblTit.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -color-text-main;");
+        TextField txtComando = new TextField(); txtComando.setPromptText("Dicta tu comando..."); txtComando.setStyle("-fx-background-color: -color-bg-base; -fx-text-fill: -color-text-main; -fx-padding: 10;");
+        Button btnEjecutar = new Button("Procesar Comando"); btnEjecutar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 6;");
         
         btnEjecutar.setOnAction(e -> {
             String c = txtComando.getText().toLowerCase();
-            
             if (c.contains("inicio") || c.contains("principal") || c.contains("home")) { if(btnInicio != null) btnInicio.fire(); }
             else if (c.contains("agenda") || c.contains("horario") || c.contains("clases hoy")) { if(btnAgenda != null) btnAgenda.fire(); }
             else if (c.contains("nota") || c.contains("apunte")) { if(btnNotas != null) btnNotas.fire(); }
@@ -739,17 +696,12 @@ public class DashboardView {
             else if (c.contains("logro") || c.contains("medallas") || c.contains("progreso")) { if(btnLogros != null) btnLogros.fire(); }
             else if (c.contains("reinscripcion") || c.contains("semestre") || c.contains("materias nuevas")) { if(btnReinscripcion != null) btnReinscripcion.fire(); }
             else if (c.contains("ajuste") || c.contains("configura") || c.contains("tema")) { if(btnAjustes != null) btnAjustes.fire(); }
-            
             popup.close();
         });
         
         rootBox.getChildren().addAll(lblTit, txtComando, btnEjecutar);
-        
         Scene s = new Scene(rootBox, 350, 180); s.setFill(Color.TRANSPARENT);
-        aplicarTemaGlobal(s, correoActualGlobal);
-        popup.setScene(s); popup.show();
-        
-        popup.setX(owner.getX() + (owner.getWidth() - popup.getWidth()) / 2);
-        popup.setY(owner.getY() + (owner.getHeight() - popup.getHeight()) / 2);
+        aplicarTemaGlobal(s, correoActualGlobal); popup.setScene(s); popup.show();
+        popup.setX(owner.getX() + (owner.getWidth() - popup.getWidth()) / 2); popup.setY(owner.getY() + (owner.getHeight() - popup.getHeight()) / 2);
     }
 }
