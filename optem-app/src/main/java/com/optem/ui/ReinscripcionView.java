@@ -72,10 +72,16 @@ public class ReinscripcionView extends BorderPane {
         this.setTop(header);
         BorderPane.setMargin(header, new Insets(0, 0, 20, 0));
 
-        if (!adminController.isReinscripcionActiva()) {
-            mostrarPantallaCerrada();
+        // =========================================================================
+        // CONEXIÓN CON EL PANEL DEL ADMINISTRADOR (VERIFICACIÓN GLOBAL)
+        // =========================================================================
+        Preferences prefsGlobales = Preferences.userRoot().node("optem_erp_global");
+        boolean periodoAbierto = prefsGlobales.getBoolean("REINSCRIPCION_ABIERTA", false);
+
+        if (!periodoAbierto) {
+            mostrarPantallaCerrada(); // Muestra el candado rojo
         } else {
-            construirPantallaInscripcion();
+            construirPantallaInscripcion(); // Muestra la oferta y el horario
         }
     }
 

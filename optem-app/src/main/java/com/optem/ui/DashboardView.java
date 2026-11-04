@@ -64,7 +64,6 @@ import javafx.util.Duration;
 public class DashboardView {
 
     private final DashboardController controller = new DashboardController();
-    private final AdminViews adminViews = new AdminViews();
 
     private boolean isSidebarExpanded = true;
     private static final double EXPANDED_WIDTH = 260;
@@ -76,8 +75,9 @@ public class DashboardView {
     private String correoActualGlobal;
     private Button btnToggle; 
 
+    // Agregamos el botón de reinscripción admin a la declaración
     private Button btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnActividades, btnGrupos, btnPomodoro, btnLogros, btnReinscripcion, btnAjustes;
-    private Button btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdConfig;
+    private Button btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdReinscripcion, btnAdConfig;
 
     private BorderPane root;
     private ScrollPane scrollAlumno;
@@ -183,7 +183,7 @@ public class DashboardView {
         ContextMenu profileMenu = new ContextMenu(); profileMenu.getStyleClass().add("menu-dominio-oro"); 
         MenuItem mnuCambiarFoto = new MenuItem("📷  Cambiar foto de perfil"); MenuItem mnuCambiarCuenta = new MenuItem("🔄  Cambiar de usuario"); MenuItem mnuCerrarSesion = new MenuItem("🚪  Cerrar sesión");
         profileMenu.getItems().addAll(mnuCambiarFoto, mnuCambiarCuenta, mnuCerrarSesion);
-        mnuCambiarFoto.setOnAction(e -> { if (btnAjustes != null) btnAjustes.fire(); });
+        mnuCambiarFoto.setOnAction(e -> { if (btnAjustes != null) btnAjustes.fire(); else if (btnAdConfig != null) btnAdConfig.fire(); });
         mnuCambiarCuenta.setOnAction(e -> mostrarVentanaMultiCuentas(stage, correoUsuario, fileKey));
         mnuCerrarSesion.setOnAction(e -> { try { controller.cerrarSesion(); new LoginView().show(stage); } catch (Exception ex) {} });
         userPic.setOnMouseClicked(evt -> profileMenu.show(userPic, evt.getScreenX(), evt.getScreenY()));
@@ -192,31 +192,41 @@ public class DashboardView {
         Runnable themeUpdater = () -> show(stage, correoUsuario, fileKey); 
         String rol = controller.getRolUsuario(); 
 
+        // =======================================================
+        // ENRUTAMIENTO DEL ADMINISTRADOR ACTUALIZADO
+        // =======================================================
         if (rol.equals("ADMINISTRADOR")) {
-            btnAdStats = createMenuButton("📊", "Estadísticas"); btnAdStats.setOnAction(e -> { root.setCenter(new ScrollPane(adminViews.getVistaEstadisticas())); actualizarSeleccionMenu(btnAdStats); });
-            btnAdPerfiles = createMenuButton("👤", "Gestión de Perfiles"); btnAdPerfiles.setOnAction(e -> { root.setCenter(new ScrollPane(adminViews.getVistaPerfiles())); actualizarSeleccionMenu(btnAdPerfiles); });
-            btnAdDocs = createMenuButton("📁", "Docs y Trayectoria"); btnAdDocs.setOnAction(e -> { root.setCenter(new ScrollPane(adminViews.getVistaDocumentos())); actualizarSeleccionMenu(btnAdDocs); });
-            btnAdIA = createMenuButton("🤖", "Inteligencia Artificial"); btnAdIA.setOnAction(e -> { root.setCenter(new ScrollPane(adminViews.getVistaIA())); actualizarSeleccionMenu(btnAdIA); });
-            btnAdConfig = createMenuButton("⚙", "Configuración Sistema"); btnAdConfig.setOnAction(e -> { root.setCenter(new ScrollPane(adminViews.getVistaConfiguracion())); actualizarSeleccionMenu(btnAdConfig); });
-            menuButtonsBox.getChildren().addAll(btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdConfig);
+            btnAdStats = createMenuButton("📊", "Estadísticas"); 
+            btnAdStats.setOnAction(e -> { root.setCenter(new AdminEstadisticasView().getView()); actualizarSeleccionMenu(btnAdStats); });
+            
+            btnAdPerfiles = createMenuButton("👤", "Gestión de Perfiles"); 
+            btnAdPerfiles.setOnAction(e -> { root.setCenter(new AdminPerfilesView().getView()); actualizarSeleccionMenu(btnAdPerfiles); });
+            
+            btnAdDocs = createMenuButton("📁", "Docs y Trayectoria"); 
+            btnAdDocs.setOnAction(e -> { root.setCenter(new AdminDocsView().getView()); actualizarSeleccionMenu(btnAdDocs); });
+            
+            btnAdIA = createMenuButton("🤖", "Inteligencia Artificial"); 
+            btnAdIA.setOnAction(e -> { root.setCenter(new AdminIAView().getView()); actualizarSeleccionMenu(btnAdIA); });
+
+            // NUEVA VISTA DE REINSCRIPCION PARA ADMIN
+            btnAdReinscripcion = createMenuButton("📑", "Reinscripción"); 
+            btnAdReinscripcion.setOnAction(e -> { root.setCenter(new AdminReinscripcionView().getView()); actualizarSeleccionMenu(btnAdReinscripcion); });
+            
+            btnAdConfig = createMenuButton("⚙", "Configuración Sistema"); 
+            btnAdConfig.setOnAction(e -> { root.setCenter(new AjustesView(themeUpdater, correoUsuario).getView()); actualizarSeleccionMenu(btnAdConfig); });
+            
+            menuButtonsBox.getChildren().addAll(btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdReinscripcion, btnAdConfig);
             btnAdStats.fire();
         } 
+        // =======================================================
+        // ENRUTAMIENTO DEL MAESTRO
+        // =======================================================
         else if (rol.equals("MAESTRO")) {
-            btnInicio = createMenuButton("🏠", "Inicio"); 
-            btnInicio.setOnAction(e -> { root.setCenter(new InicioMaestroView().getView()); actualizarSeleccionMenu(btnInicio); });
-            
-            btnAgenda = createMenuButton("📅", "Mi Agenda"); 
-            btnAgenda.setOnAction(e -> { try { root.setCenter(new AgendaMaestroView().getView()); actualizarSeleccionMenu(btnAgenda); } catch(Exception ex) {} });
-            
+            btnInicio = createMenuButton("🏠", "Inicio"); btnInicio.setOnAction(e -> { root.setCenter(new InicioMaestroView().getView()); actualizarSeleccionMenu(btnInicio); });
+            btnAgenda = createMenuButton("📅", "Mi Agenda"); btnAgenda.setOnAction(e -> { try { root.setCenter(new AgendaMaestroView().getView()); actualizarSeleccionMenu(btnAgenda); } catch(Exception ex) {} });
             btnNotas = createMenuButton("📝", "Notas"); btnNotas.setOnAction(e -> { root.setCenter(new NotasView().getView()); actualizarSeleccionMenu(btnNotas); });
-            
-            btnTareas = createMenuButton("✅", "Tareas"); 
-            btnTareas.setOnAction(e -> { root.setCenter(new TareasMaestroView().getView()); actualizarSeleccionMenu(btnTareas); });
-            
-            // --- NUEVO PANEL DE REUNIONES PARA EL MAESTRO ---
-            btnReuniones = createMenuButton("🎥", "Reuniones"); 
-            btnReuniones.setOnAction(e -> { root.setCenter(new ReunionesMaestroView().getView()); actualizarSeleccionMenu(btnReuniones); });
-            
+            btnTareas = createMenuButton("✅", "Tareas"); btnTareas.setOnAction(e -> { root.setCenter(new TareasMaestroView().getView()); actualizarSeleccionMenu(btnTareas); });
+            btnReuniones = createMenuButton("🎥", "Reuniones"); btnReuniones.setOnAction(e -> { root.setCenter(new ReunionesMaestroView().getView()); actualizarSeleccionMenu(btnReuniones); });
             btnGrupos = createMenuButton("👥", "Mis Grupos"); btnGrupos.setOnAction(e -> { root.setCenter(new GruposMaestroView()); actualizarSeleccionMenu(btnGrupos); });
             btnPomodoro = createMenuButton("⏱", "Pomodoro"); btnPomodoro.setOnAction(e -> { root.setCenter(new PomodoroView()); actualizarSeleccionMenu(btnPomodoro); });
             btnLogros = createMenuButton("🏆", "Logros"); btnLogros.setOnAction(e -> { root.setCenter(new LogrosView()); actualizarSeleccionMenu(btnLogros); });
@@ -225,17 +235,17 @@ public class DashboardView {
             menuButtonsBox.getChildren().addAll(btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnGrupos, btnPomodoro, btnLogros, btnAjustes);
             btnInicio.fire();
         } 
-        else { // ESTUDIANTE
+        // =======================================================
+        // ENRUTAMIENTO DEL ESTUDIANTE
+        // =======================================================
+        else { 
             construirInicioEstudiante(animacionesActivas, colorFuerte, stage);
             
             btnInicio = createMenuButton("🏠", "Inicio"); btnInicio.setOnAction(e -> { root.setCenter(scrollAlumno); actualizarSeleccionMenu(btnInicio); });
             btnAgenda = createMenuButton("📅", "Mi Agenda"); btnAgenda.setOnAction(e -> { try { root.setCenter(new AgendaView().getView()); actualizarSeleccionMenu(btnAgenda); } catch(Exception ex) {} });
             btnNotas = createMenuButton("📝", "Notas"); btnNotas.setOnAction(e -> { root.setCenter(new NotasView().getView()); actualizarSeleccionMenu(btnNotas); });
             btnTareas = createMenuButton("✅", "Tareas"); btnTareas.setOnAction(e -> { root.setCenter(new TareasView().getView()); actualizarSeleccionMenu(btnTareas); });
-            
-            // Reuniones del Estudiante (Original)
             btnReuniones = createMenuButton("🎥", "Reuniones"); btnReuniones.setOnAction(e -> { root.setCenter(new ReunionesView().getView()); actualizarSeleccionMenu(btnReuniones); });
-            
             btnActividades = createMenuButton("🎯", "Actividades"); btnActividades.setOnAction(e -> { root.setCenter(new ActividadesView()); actualizarSeleccionMenu(btnActividades); });
             btnPomodoro = createMenuButton("⏱", "Pomodoro"); btnPomodoro.setOnAction(e -> { root.setCenter(new PomodoroView()); actualizarSeleccionMenu(btnPomodoro); });
             btnLogros = createMenuButton("🏆", "Logros"); btnLogros.setOnAction(e -> { root.setCenter(new LogrosView()); actualizarSeleccionMenu(btnLogros); });
@@ -257,8 +267,8 @@ public class DashboardView {
                 new KeyFrame(Duration.millis(200), new KeyValue(sidebar.prefWidthProperty(), targetWidth), new KeyValue(userPic.radiusProperty(), isSidebarExpanded ? 35 : 22))
             );
             timeline.setOnFinished(evt -> {
-                if (!isSidebarExpanded) { sidebar.setPadding(new Insets(15, 10, 15, 10)); userBox.getChildren().remove(lblName); toggleButtonTexts(false, btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnActividades, btnGrupos, btnPomodoro, btnLogros, btnReinscripcion, btnAjustes, btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdConfig); } 
-                else { sidebar.setPadding(new Insets(15, 20, 15, 20)); if (!userBox.getChildren().contains(lblName)) userBox.getChildren().add(lblName); toggleButtonTexts(true, btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnActividades, btnGrupos, btnPomodoro, btnLogros, btnReinscripcion, btnAjustes, btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdConfig); }
+                if (!isSidebarExpanded) { sidebar.setPadding(new Insets(15, 10, 15, 10)); userBox.getChildren().remove(lblName); toggleButtonTexts(false, btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnActividades, btnGrupos, btnPomodoro, btnLogros, btnReinscripcion, btnAjustes, btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdReinscripcion, btnAdConfig); } 
+                else { sidebar.setPadding(new Insets(15, 20, 15, 20)); if (!userBox.getChildren().contains(lblName)) userBox.getChildren().add(lblName); toggleButtonTexts(true, btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnActividades, btnGrupos, btnPomodoro, btnLogros, btnReinscripcion, btnAjustes, btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdReinscripcion, btnAdConfig); }
                 sidebar.setCache(false); if (root.getCenter() != null) root.getCenter().setCache(false);
             }); timeline.play();
         });
@@ -571,7 +581,7 @@ public class DashboardView {
     }
 
     private void actualizarSeleccionMenu(Button botonSeleccionado) {
-        Button[] botones = {btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnActividades, btnGrupos, btnPomodoro, btnLogros, btnReinscripcion, btnAjustes, btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdConfig};
+        Button[] botones = {btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnActividades, btnGrupos, btnPomodoro, btnLogros, btnReinscripcion, btnAjustes, btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdReinscripcion, btnAdConfig};
         String colorFuerte = controller.getColorFuerte();
         for (Button b : botones) {
             if (b == null) continue;
@@ -694,8 +704,8 @@ public class DashboardView {
             else if (c.contains("reunion") || c.contains("videollamada") || c.contains("teams")) { if(btnReuniones != null) btnReuniones.fire(); }
             else if (c.contains("pomodoro") || c.contains("reloj") || c.contains("estudiar")) { if(btnPomodoro != null) btnPomodoro.fire(); }
             else if (c.contains("logro") || c.contains("medallas") || c.contains("progreso")) { if(btnLogros != null) btnLogros.fire(); }
-            else if (c.contains("reinscripcion") || c.contains("semestre") || c.contains("materias nuevas")) { if(btnReinscripcion != null) btnReinscripcion.fire(); }
-            else if (c.contains("ajuste") || c.contains("configura") || c.contains("tema")) { if(btnAjustes != null) btnAjustes.fire(); }
+            else if (c.contains("reinscripcion") || c.contains("semestre") || c.contains("materias nuevas")) { if(btnReinscripcion != null) btnReinscripcion.fire(); else if (btnAdReinscripcion != null) btnAdReinscripcion.fire(); }
+            else if (c.contains("ajuste") || c.contains("configura") || c.contains("tema")) { if(btnAjustes != null) btnAjustes.fire(); else if(btnAdConfig != null) btnAdConfig.fire(); }
             popup.close();
         });
         

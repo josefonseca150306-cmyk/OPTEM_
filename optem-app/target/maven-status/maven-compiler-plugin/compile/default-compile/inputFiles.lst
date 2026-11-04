@@ -1,8 +1,10 @@
+c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\AdminPerfilesView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\AgendaMaestroView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\AjustesView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\PomodoroView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\ReinscripcionView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\NotasView.java
+c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\AdminDocsView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\GruposMaestroView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\AddAccountController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\TareasController.java
@@ -13,6 +15,7 @@ c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\Reuni
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\PomodoroController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\logic\ActividadManager.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\AgendaController.java
+c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\AdminReinscripcionView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\DashboardController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\TareasMaestroView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\ChatBotController.java
@@ -28,6 +31,7 @@ c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\MainApp.
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\database\LocalDB.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\models\Actividad.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\LoginView.java
+c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\AdminEstadisticasView.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\AdminController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\ReinscripcionController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\ActividadesView.java
@@ -41,3 +45,4 @@ c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controll
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\SplashController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\controllers\AjustesController.java
 c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\ChatBotView.java
+c:\Users\josef\OneDrive\Desktop\OPTEM\optem-app\src\main\java\com\optem\ui\AdminIAView.java
