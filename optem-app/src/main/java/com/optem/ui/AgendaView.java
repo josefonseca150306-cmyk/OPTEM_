@@ -116,9 +116,12 @@ public class AgendaView {
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        Label titulo = new Label("📅 Mi Agenda Universitaria");
-        titulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-family: 'Segoe UI Emoji';");
-        titulo.getStyleClass().add("lbl-titulo-banner"); 
+        VBox titleBox = new VBox(5);
+        Label titulo = new Label("Mi Agenda Universitaria");
+        titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
+        Label subtitulo = new Label("Planifica y organiza tus semanas");
+        subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
+        titleBox.getChildren().addAll(titulo, subtitulo);
 
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
 
@@ -138,7 +141,7 @@ public class AgendaView {
         btnHoy.setOnAction(e -> { fechaActual = LocalDate.now(); renderizarVistaActual(); });
         
         navBox.getChildren().addAll(btnAtras, btnHoy, btnAdelante);
-        header.getChildren().addAll(titulo, spacer, selectorVista, navBox);
+        header.getChildren().addAll(titleBox, spacer, selectorVista, navBox);
         return header;
     }
 
@@ -167,7 +170,6 @@ public class AgendaView {
     // ==========================================
     private VBox crearPanelLateralIzquierdo() {
         VBox panel = new VBox(20);
-        // Ampliamos un poco el panel izquierdo para darle respiración a las cosas más grandes
         panel.setPrefWidth(280); panel.setMaxWidth(280);
         
         VBox boxCalendario = new VBox(15);
@@ -191,23 +193,20 @@ public class AgendaView {
         boxCalendario.getChildren().addAll(lblMesMini, gridMiniCalendario);
         actualizarMiniCalendario();
 
-        // Filtros Rápidos (Píldoras) - AHORA MÁS GRANDES Y ADAPTATIVOS
         VBox boxFiltros = new VBox(12);
         Label lblFil = new Label("Filtros rápidos:");
         lblFil.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: " + colorTextMuted + ";");
         
-        // FlowPane permite que los botones salten a la siguiente línea si no caben
         FlowPane pildoras = new FlowPane();
         pildoras.setHgap(8); pildoras.setVgap(8);
         pildoras.getChildren().addAll(
             crearPildoraFiltro("Todas"), 
             crearPildoraFiltro("Tareas"), 
-            crearPildoraFiltro("Actividades"), // Nuevo filtro agregado
+            crearPildoraFiltro("Actividades"), 
             crearPildoraFiltro("Pendientes")
         );
         boxFiltros.getChildren().addAll(lblFil, pildoras);
 
-        // Mini Dashboard Semanal - AHORA MÁS GRANDE
         dashboardProductividad = new VBox(15);
         dashboardProductividad.setAlignment(Pos.CENTER);
         dashboardProductividad.setStyle("-fx-background-color: " + colorBgBase + "; -fx-background-radius: 12; -fx-padding: 20;");
@@ -219,7 +218,6 @@ public class AgendaView {
     
     private Button crearPildoraFiltro(String texto) {
         Button btn = new Button(texto);
-        // Aumentamos el tamaño de fuente (13px) y el padding (6 14) para hacerlos más clickeables
         String estiloActivo = "-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-background-radius: 20; -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 6 14;";
         String estiloInactivo = "-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 20; -fx-font-size: 13px; -fx-cursor: hand; -fx-padding: 5 13;";
         
@@ -245,27 +243,32 @@ public class AgendaView {
         Label lblT = new Label("Productividad Semanal");
         lblT.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 14px;");
         
-        // Círculo mucho más grande (Radio 45, Grosor 8)
-        StackPane anillo = new StackPane();
-        Circle fondo = new Circle(45, Color.TRANSPARENT);
-        fondo.setStyle("-fx-stroke: " + colorBorder + "; -fx-stroke-width: 8;");
+        StackPane anilloContenedor = new StackPane();
+        anilloContenedor.setAlignment(Pos.CENTER);
+        
+        Circle fondo = new Circle(45);
+        fondo.setFill(Color.TRANSPARENT);
+        fondo.setStroke(Color.web(colorBorder));
+        fondo.setStrokeWidth(8);
         
         double porcentaje = total == 0 ? 0 : (double) completadas / total;
         Arc arco = new Arc(0, 0, 45, 45, 90, -360 * porcentaje);
         arco.setFill(Color.TRANSPARENT);
-        arco.setStyle("-fx-stroke: " + colorFuerte + "; -fx-stroke-width: 8;");
+        arco.setStroke(Color.web(colorFuerte));
+        arco.setStrokeWidth(8);
         arco.setStrokeLineCap(StrokeLineCap.ROUND);
         
-        // Porcentaje más visible (20px)
+        javafx.scene.Group formas = new javafx.scene.Group(fondo, arco);
+        
         Label lblPorc = new Label((int)(porcentaje * 100) + "%");
         lblPorc.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-font-size: 20px;");
         
-        anillo.getChildren().addAll(fondo, arco, lblPorc);
+        anilloContenedor.getChildren().addAll(formas, lblPorc);
         
         Label lblInfo = new Label(completadas + " de " + total + " tareas terminadas");
         lblInfo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px;");
         
-        dashboardProductividad.getChildren().addAll(lblT, anillo, lblInfo);
+        dashboardProductividad.getChildren().addAll(lblT, anilloContenedor, lblInfo);
     }
 
     private void actualizarMiniCalendario() {
@@ -318,8 +321,7 @@ public class AgendaView {
     // ==========================================
     private void renderizarVistaDia(LocalDate dia) {
         Label lblDia = new Label(dia.format(DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM")).toUpperCase());
-        lblDia.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-padding: 20;");
-        lblDia.getStyleClass().add("lbl-titulo-seccion");
+        lblDia.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 18px; -fx-padding: 20;");
         panelCentral.getChildren().add(lblDia);
 
         AnchorPane timeGrid = new AnchorPane();
@@ -387,12 +389,10 @@ public class AgendaView {
         VBox infoBox = new VBox(2);
         String titulo = (act.getNombre() != null) ? act.getNombre() : "Sin Título";
         Label lblTit = new Label(titulo);
-        lblTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
-        lblTit.getStyleClass().add("lbl-text-normal");
+        lblTit.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: " + colorTextMain + ";");
         
         Label lblSub = new Label((act.getMateria() != null ? act.getMateria() : "General") + " • " + act.getHoraVencimiento());
-        lblSub.setStyle("-fx-text-fill: " + colorTextMuted + ";");
-        lblSub.getStyleClass().add("lbl-text-pequeno");
+        lblSub.setStyle("-fx-font-size: 12px; -fx-text-fill: " + colorTextMuted + ";");
         
         infoBox.getChildren().addAll(lblTit, lblSub);
         card.getChildren().add(infoBox);
@@ -406,8 +406,7 @@ public class AgendaView {
     // ==========================================
     private void renderizarVistaSemana(LocalDate inicioSemana) {
         Label lblSemana = new Label("SEMANA DEL " + inicioSemana.format(DateTimeFormatter.ofPattern("d MMM")) + " AL " + inicioSemana.plusDays(6).format(DateTimeFormatter.ofPattern("d MMM yyyy")).toUpperCase());
-        lblSemana.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-padding: 20;");
-        lblSemana.getStyleClass().add("lbl-titulo-seccion"); 
+        lblSemana.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 18px; -fx-padding: 20;");
         panelCentral.getChildren().add(lblSemana);
 
         HBox gridSemana = new HBox(10);
@@ -421,12 +420,10 @@ public class AgendaView {
             colDia.setStyle("-fx-padding: 5; -fx-background-radius: 8; -fx-border-color: transparent;");
             
             Label lblNum = new Label(String.valueOf(dia.getDayOfMonth()));
-            lblNum.setStyle("-fx-font-weight: bold; -fx-text-fill: " + (dia.equals(LocalDate.now()) ? colorFuerte : colorTextMain) + ";");
-            lblNum.getStyleClass().add("lbl-numero-grande"); 
+            lblNum.setStyle("-fx-font-weight: bold; -fx-font-size: 24px; -fx-text-fill: " + (dia.equals(LocalDate.now()) ? colorFuerte : colorTextMain) + ";");
             
             Label lblNom = new Label(nombresDias[i]);
-            lblNom.setStyle("-fx-text-fill: " + colorTextMuted + ";");
-            lblNom.getStyleClass().add("lbl-text-pequeno");
+            lblNom.setStyle("-fx-font-size: 12px; -fx-text-fill: " + colorTextMuted + ";");
             
             VBox headerDia = new VBox(lblNom, lblNum);
             headerDia.setAlignment(Pos.CENTER);
@@ -479,8 +476,7 @@ public class AgendaView {
 
     private void renderizarVistaMes(YearMonth mes) {
         Label lblMes = new Label(mes.format(DateTimeFormatter.ofPattern("MMMM yyyy")).toUpperCase());
-        lblMes.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-padding: 20;");
-        lblMes.getStyleClass().add("lbl-titulo-seccion");
+        lblMes.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: " + colorTextMain + "; -fx-padding: 20;");
         panelCentral.getChildren().add(lblMes);
 
         GridPane gridMes = new GridPane();
@@ -490,7 +486,7 @@ public class AgendaView {
         String[] diasCortos = {"Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"};
         for (int i = 0; i < 7; i++) {
             Label l = new Label(diasCortos[i]);
-            l.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMuted + "; -fx-padding: 10;");
+            l.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: " + colorTextMuted + "; -fx-padding: 10;");
             GridPane.setHalignment(l, HPos.CENTER);
             
             ColumnConstraints cc = new ColumnConstraints();
@@ -512,8 +508,7 @@ public class AgendaView {
             celdaDia.setStyle("-fx-border-color: " + colorBorder + "; -fx-border-radius: 6; -fx-background-color: " + (fechaCelda.equals(LocalDate.now()) ? colorFuerte+"10" : colorBgBase) + ";");
             
             Label lblNum = new Label(String.valueOf(dia));
-            lblNum.setStyle("-fx-font-weight: bold; -fx-text-fill: " + (fechaCelda.equals(LocalDate.now()) ? colorFuerte : colorTextMain) + ";");
-            lblNum.getStyleClass().add("lbl-text-normal");
+            lblNum.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: " + (fechaCelda.equals(LocalDate.now()) ? colorFuerte : colorTextMain) + ";");
             celdaDia.getChildren().add(lblNum);
 
             List<Actividad> acts = controller.getActividadesDelDia(fechaCelda, filtroActual);
@@ -553,8 +548,7 @@ public class AgendaView {
 
         String titulo = (act.getNombre() != null) ? act.getNombre() : "Evento";
         Label lTit = new Label(titulo);
-        lTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
-        lTit.getStyleClass().add("lbl-text-pequeno"); 
+        lTit.setStyle("-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: " + colorTextMain + ";");
         
         String textoHora = (act.getHoraVencimiento() != null) ? act.getHoraVencimiento().toString() : "00:00";
         Label lHora = new Label(textoHora);
@@ -572,16 +566,6 @@ public class AgendaView {
         Label lbl = new Label("• " + titulo);
         lbl.setStyle("-fx-font-size: 10px; -fx-text-fill: " + (caducada ? "#D32F2F" : colorMat) + "; -fx-font-weight: bold;");
         return lbl;
-    }
-
-    private VBox crearMensajeVacio(String titulo, String msj) {
-        VBox b = new VBox(10); b.setAlignment(Pos.CENTER); b.setPadding(new Insets(60, 0, 60, 0));
-        Label l1 = new Label("☕ " + titulo); l1.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMuted + "; -fx-font-family: 'Segoe UI Emoji';");
-        l1.getStyleClass().add("lbl-titulo-seccion"); 
-        Label l2 = new Label(msj); l2.setStyle("-fx-text-fill: " + colorTextMuted + ";");
-        l2.getStyleClass().add("lbl-text-normal"); 
-        b.getChildren().addAll(l1, l2);
-        return b;
     }
 
     private void mostrarVentanaDetalles(Actividad act, boolean caducada, boolean completada) {
@@ -603,7 +587,7 @@ public class AgendaView {
         Label lblT = new Label(titulo); lblT.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
         
         String materiaInfo = (act.getMateria() != null) ? act.getMateria() : "General";
-        Label lblM = new Label(materiaInfo + " • " + tipoInfo); lblM.setStyle("-fx-text-fill: " + colorTextMuted + ";");
+        Label lblM = new Label(materiaInfo + " • " + tipoInfo); lblM.setStyle("-fx-font-size: 12px; -fx-text-fill: " + colorTextMuted + ";");
         titBox.getChildren().addAll(lblT, lblM);
         
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
@@ -623,13 +607,13 @@ public class AgendaView {
         gridTiempo.add(crearInfoLabel(tipoInfo.equals("Tarea") ? "FECHA LÍMITE" : "HORA EVENTO", fechaTexto + " • " + horaTexto), 1, 0);
         
         Label lblEstado = new Label(caducada ? "❌ CADUCADA" : (completada ? "✅ COMPLETADA" : "⏳ PENDIENTE"));
-        lblEstado.setStyle("-fx-font-weight: bold; -fx-text-fill: " + (caducada ? "#D32F2F" : (completada ? "#388E3C" : colorFuerte)) + ";");
+        lblEstado.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: " + (caducada ? "#D32F2F" : (completada ? "#388E3C" : colorFuerte)) + ";");
         gridTiempo.add(crearInfoLabel("ESTADO ACTUAL", lblEstado.getText()), 2, 0);
 
         VBox descBox = new VBox(10);
-        Label lD = new Label("Mensaje / Instrucciones:"); lD.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
+        Label lD = new Label("Mensaje / Instrucciones:"); lD.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
         String descripcion = (act.getDescripcion() != null) ? act.getDescripcion() : "Sin detalles adicionales.";
-        Label txtD = new Label(descripcion); txtD.setStyle("-fx-text-fill: " + colorTextMain + "; -fx-wrap-text: true; -fx-line-spacing: 5px;");
+        Label txtD = new Label(descripcion); txtD.setStyle("-fx-font-size: 14px; -fx-text-fill: " + colorTextMain + "; -fx-wrap-text: true; -fx-line-spacing: 5px;");
         descBox.getChildren().addAll(lD, txtD);
 
         root.getChildren().addAll(topBar, gridTiempo, descBox);

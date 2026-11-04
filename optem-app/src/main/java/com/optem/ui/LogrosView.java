@@ -39,15 +39,14 @@ public class LogrosView extends VBox {
         contenido.setPadding(new Insets(30, 40, 40, 40));
         contenido.setStyle("-fx-background-color: transparent;");
 
-        // --- 1. CABECERA ---
+        // --- 1. CABECERA ESTANDARIZADA (SIMETRÍA CON AGENDA Y NOTAS) ---
         VBox header = new VBox(5);
-        Label titulo = new Label("★ Sistema de Logros y Niveles");
-        titulo.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main; -fx-font-family: 'Segoe UI Symbol';");
-        titulo.getStyleClass().add("lbl-titulo-banner"); 
+        Label titulo = new Label("Sistema de Logros y Niveles");
+        titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
         
         Label subtitulo = new Label("Gana XP entregando tareas a tiempo y completando sesiones Pomodoro");
-        subtitulo.setStyle("-fx-text-fill: -color-text-muted;");
-        subtitulo.getStyleClass().add("lbl-text-normal");
+        subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
+        
         header.getChildren().addAll(titulo, subtitulo);
 
         // --- 2. MEDALLAS DESBLOQUEADAS ---
@@ -82,8 +81,7 @@ public class LogrosView extends VBox {
         mapaNiveles.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 15; -fx-padding: 30; -fx-border-color: " + colorBorder + "; -fx-border-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 4);");
         
         Label lblMapa = new Label("🗺 Mapa de niveles");
-        lblMapa.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main; -fx-font-family: 'Segoe UI Symbol';");
-        lblMapa.getStyleClass().add("lbl-titulos-seccion");
+        lblMapa.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 16px; -fx-font-family: 'Segoe UI Symbol';");
         
         mapaNiveles.getChildren().add(lblMapa);
         mapaNiveles.getChildren().addAll(
@@ -106,7 +104,7 @@ public class LogrosView extends VBox {
         lblBannerTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + ";");
         lblBannerTitle.getStyleClass().add("lbl-text-normal");
         Label lblBannerSub = new Label("Cada sesión y cada tarea entregada te acerca al siguiente nivel.");
-        lblBannerSub.setStyle("-fx-text-fill: -color-text-muted;");
+        lblBannerSub.setStyle("-fx-text-fill: " + colorTextMuted + ";");
         lblBannerSub.getStyleClass().add("lbl-text-pequeno");
         bannerTextos.getChildren().addAll(lblBannerTitle, lblBannerSub);
         
@@ -170,16 +168,15 @@ public class LogrosView extends VBox {
         medalla.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 10; -fx-border-color: " + colorBorder + "; -fx-border-radius: 10;");
         medalla.setPrefWidth(180);
         
-        // CORRECCIÓN: Íconos visibles en Modo Oscuro (se pintan de colorTextMain o colorFuerte)
         Label lblIcon = new Label(desbloqueada ? icono : "🔒");
         String colorIcono = desbloqueada ? "-color-text-main" : "-color-text-muted";
         lblIcon.setStyle("-fx-font-size: 32px; -fx-font-family: 'Segoe UI Emoji'; -fx-text-fill: " + colorIcono + "; -fx-opacity: " + (desbloqueada ? "1.0" : "0.5") + ";");
         
         Label lblTit = new Label(titulo);
-        lblTit.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main;");
+        lblTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
         
         Label lblDesc = new Label(desc);
-        lblDesc.setStyle("-fx-text-fill: -color-text-muted; -fx-font-size: 11px;");
+        lblDesc.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 11px;");
         
         medalla.getChildren().addAll(lblIcon, lblTit, lblDesc);
         return medalla;
@@ -192,7 +189,7 @@ public class LogrosView extends VBox {
         Group grupoCirculos = new Group();
         Circle anilloFondo = new Circle(0, 0, 70);
         anilloFondo.setFill(Color.TRANSPARENT);
-        anilloFondo.setStyle("-fx-stroke: -color-border;");
+        anilloFondo.setStyle("-fx-stroke: " + colorBorder + ";");
         anilloFondo.setStrokeWidth(12);
 
         double porcentaje = xpMeta == 0 ? 0 : Math.min(1.0, (double) xpActual / xpMeta);
@@ -210,10 +207,10 @@ public class LogrosView extends VBox {
         lblNivel.getStyleClass().add("lbl-text-pequeno");
         
         Label lblXP = new Label(xpActual + " XP");
-        lblXP.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main; -fx-font-size: 32px;");
+        lblXP.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 32px;");
         
         Label lblFaltan = new Label("Progreso del día: " + xpActual + " / " + xpMeta);
-        lblFaltan.setStyle("-fx-text-fill: -color-text-muted;");
+        lblFaltan.setStyle("-fx-text-fill: " + colorTextMuted + ";");
         lblFaltan.getStyleClass().add("lbl-text-pequeno");
 
         layout.getChildren().addAll(contenedorCirculo, lblNivel, lblXP, lblFaltan);
@@ -224,15 +221,14 @@ public class LogrosView extends VBox {
         VBox layout = new VBox(15);
         layout.setAlignment(Pos.CENTER);
 
-        // CORRECCIÓN: Ícono del cubo/llama adaptado a modo oscuro
         Label iconoFuego = new Label(dias > 0 ? "🔥" : "🧊");
         iconoFuego.setStyle("-fx-font-size: 55px; -fx-font-family: 'Segoe UI Emoji'; -fx-text-fill: " + (dias > 0 ? "#E65100" : "-color-text-muted") + ";");
         
         Label lblDias = new Label(dias + " Días");
-        lblDias.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main; -fx-font-size: 32px;"); 
+        lblDias.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 32px;"); 
         
         Label lblTexto = new Label("Racha activa consecutiva");
-        lblTexto.setStyle("-fx-text-fill: -color-text-muted;");
+        lblTexto.setStyle("-fx-text-fill: " + colorTextMuted + ";");
         lblTexto.getStyleClass().add("lbl-text-pequeno");
         
         Label lblBono = new Label("Bono multiplicador: x" + bono + " XP");
@@ -251,17 +247,16 @@ public class LogrosView extends VBox {
         StackPane iconBox = new StackPane();
         iconBox.setStyle("-fx-background-color: " + (desbloqueado ? colorFuerte + "20" : colorBgBase) + "; -fx-background-radius: 12; -fx-min-width: 50px; -fx-min-height: 50px;");
         
-        // CORRECCIÓN: Colorear el icono según su estado (Acento si lo tienes, Gris si no)
         Label lblIcono = new Label(desbloqueado ? icono : "🔒");
         lblIcono.setStyle("-fx-font-size: 22px; -fx-font-family: 'Segoe UI Emoji'; -fx-text-fill: " + (desbloqueado ? colorFuerte : "-color-text-muted") + ";");
         iconBox.getChildren().add(lblIcono);
 
         VBox textos = new VBox(2);
         Label lblTitulo = new Label(titulo);
-        lblTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + (desbloqueado ? "-color-text-main" : "-color-text-muted") + ";");
+        lblTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + (desbloqueado ? colorTextMain : colorTextMuted) + ";");
         lblTitulo.getStyleClass().add("lbl-text-normal");
         Label lblRango = new Label(xpRango);
-        lblRango.setStyle("-fx-text-fill: -color-text-muted;");
+        lblRango.setStyle("-fx-text-fill: " + colorTextMuted + ";");
         lblRango.getStyleClass().add("lbl-text-pequeno");
         textos.getChildren().addAll(lblTitulo, lblRango);
 
@@ -277,7 +272,7 @@ public class LogrosView extends VBox {
             status.setStyle("-fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold;");
         } else {
             status.setText("Bloqueado");
-            status.setStyle("-fx-text-fill: -color-text-muted;");
+            status.setStyle("-fx-text-fill: " + colorTextMuted + ";");
         }
         status.getStyleClass().add("lbl-text-pequeno");
 

@@ -44,15 +44,19 @@ public class NotasView {
         layoutMain.setPadding(new Insets(30, 40, 30, 40));
         layoutMain.setStyle("-fx-background-color: transparent;");
 
-        // --- CABECERA ---
+        // --- CABECERA ESTANDARIZADA (SIMETRÍA ABSOLUTA CON AGENDA Y TAREAS) ---
         HBox header = new HBox(20);
         header.setAlignment(Pos.CENTER_LEFT);
         
         VBox titleBox = new VBox(5);
-        Label titulo = new Label("📔 Mi Cuaderno de Notas");
-        titulo.setStyle("-fx-font-weight: bold; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + "; -fx-font-family: 'Segoe UI Emoji';");
+        
+        // Título limpio, sin emoji y sin forzar fuente extraña, solo negrita y tamaño
+        Label titulo = new Label("Mi Cuaderno de Notas");
+        titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
+        
         Label subtitulo = new Label("Crea apuntes con formato avanzado. Da clic en una tarjeta para leer tu documento.");
         subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
+        
         titleBox.getChildren().addAll(titulo, subtitulo);
 
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -129,7 +133,6 @@ public class NotasView {
                       "-fx-border-color: " + apunte.colorHex + "; -fx-border-width: 4 1 1 1; -fx-border-radius: 12; " +
                       "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 3); -fx-cursor: hand;");
 
-        // Definimos el ícono visual para la etiqueta
         String icono = apunte.materia.equals("Nota personal") ? "📌 " : (apunte.materia.equals("Recordatorio") ? "⏰ " : "📚 ");
         
         Label lblMateria = new Label(icono + apunte.materia);
@@ -141,7 +144,6 @@ public class NotasView {
         Label lblFecha = new Label(apunte.fecha);
         lblFecha.setStyle("-fx-font-size: 10px; -fx-text-fill: " + colorTextMuted + ";");
 
-        // Para la vista previa de la tarjeta, limpiamos el HTML para que se vea como texto plano limpio
         String previewLimpio = apunte.contenido.replaceAll("<[^>]*>", "").replace("&nbsp;", " ").trim();
         Label lblTexto = new Label(previewLimpio);
         lblTexto.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-wrap-text: true; -fx-line-spacing: 4px;");
@@ -152,7 +154,7 @@ public class NotasView {
         Button btnEliminar = new Button("🗑");
         btnEliminar.setStyle("-fx-background-color: transparent; -fx-text-fill: #D32F2F; -fx-cursor: hand; -fx-font-family: 'Segoe UI Emoji';");
         btnEliminar.setOnAction(e -> {
-            e.consume(); // Evita que se abra el visor al darle clic a eliminar
+            e.consume();
             controller.eliminarApunte(apunte.id);
             actualizarTableroNotas();
             NotificacionManager.mostrarNotificacion("Eliminado", "El apunte ha sido borrado.", "INFO");
@@ -161,7 +163,6 @@ public class NotasView {
 
         card.getChildren().addAll(lblMateria, lblTit, lblFecha, lblTexto, footer);
 
-        // Al darle clic a la tarjeta, se abre el visor del documento
         card.setOnMouseClicked(e -> mostrarVisorDocumento(apunte));
 
         ScaleTransition stIn = new ScaleTransition(Duration.millis(150), card); stIn.setToX(1.03); stIn.setToY(1.03);
@@ -172,9 +173,6 @@ public class NotasView {
         return card;
     }
 
-    // ====================================================================
-    // EDITOR "WORD-LIKE" (HTMLEditor)
-    // ====================================================================
     private void mostrarEditorAvanzado() {
         Stage popup = new Stage();
         if (stagePrincipal != null) popup.initOwner(stagePrincipal);
@@ -191,7 +189,6 @@ public class NotasView {
         cmbMateria.setPromptText("📌 Selecciona una categoría...");
         cmbMateria.getItems().addAll(controller.getMateriasDisponibles());
         
-        // REDISEÑO DEL COMBOBOX (Reemplaza el diseño blanco de la imagen)
         cmbMateria.setStyle("-fx-background-color: " + colorBgBase + "; -fx-border-color: " + colorFuerte + "; -fx-border-width: 2px; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 5 10;");
         
         cmbMateria.setCellFactory(lv -> new ListCell<String>() {
@@ -238,7 +235,6 @@ public class NotasView {
         txtTitulo.setPromptText("Escribe el Título del Documento");
         txtTitulo.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 24px; -fx-font-weight: bold; -fx-prompt-text-fill: " + colorTextMuted + "80;");
         
-        // EDITOR TIPO WORD: Fuentes, Colores, Centrado, Viñetas, Numeración.
         HTMLEditor editorHtml = new HTMLEditor();
         editorHtml.setPrefHeight(450);
         VBox.setVgrow(editorHtml, Priority.ALWAYS);
@@ -268,9 +264,6 @@ public class NotasView {
         popup.show();
     }
 
-    // ====================================================================
-    // VISOR DE DOCUMENTOS (WEBVIEW)
-    // ====================================================================
     private void mostrarVisorDocumento(NotasController.ApunteDTO apunte) {
         Stage popup = new Stage();
         if (stagePrincipal != null) popup.initOwner(stagePrincipal);
@@ -299,11 +292,9 @@ public class NotasView {
         root.setTop(topBar);
         BorderPane.setMargin(topBar, new Insets(0, 0, 20, 0));
 
-        // Visor Real del HTML
         WebView visorWeb = new WebView();
-        // Le inyectamos el HTML pero nos aseguramos que el fondo se vea como hoja de papel blanca para que resalten los colores elegidos
         String htmlVisual = "<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #ffffff; color: #000000; height: 100%;'>" 
-                            + apunte.contenido + "</div>";
+                          + apunte.contenido + "</div>";
         visorWeb.getEngine().loadContent(htmlVisual);
         
         root.setCenter(visorWeb);

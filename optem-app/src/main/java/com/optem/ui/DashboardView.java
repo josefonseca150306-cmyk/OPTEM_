@@ -19,6 +19,7 @@ import com.optem.logic.ActividadManager;
 
 import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
+import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -97,11 +98,13 @@ public class DashboardView {
         String colorFuerte = controller.getColorFuerte();
         boolean animacionesActivas = controller.isAnimacionesActivas();
         
+        // --- CONTENEDOR MAESTRO --- (Permite que el chat flote por encima)
         StackPane mainRoot = new StackPane();
         root = new BorderPane();
         
         if (!stage.isShowing()) { stage.initStyle(StageStyle.UNDECORATED); }
         
+        // --- BARRA DE TÍTULO SUPERIOR ---
         HBox titleBar = new HBox(15); titleBar.setAlignment(Pos.CENTER_RIGHT); titleBar.setPadding(new Insets(10, 15, 5, 0));
         titleBar.setStyle("-fx-background-color: -color-bg-panel; -fx-border-color: -color-border; -fx-border-width: 0 0 1 0;");
         
@@ -135,6 +138,7 @@ public class DashboardView {
         
         titleBar.getChildren().addAll(btnMinimizar, btnMaxim, btnCerrar);
 
+        // --- MENÚ LATERAL ---
         VBox sidebar = new VBox(10);
         sidebar.setPrefWidth(EXPANDED_WIDTH); sidebar.setMinWidth(COLLAPSED_WIDTH); sidebar.setMaxWidth(EXPANDED_WIDTH);
         sidebar.setPadding(new Insets(15, 20, 15, 20));
@@ -219,9 +223,53 @@ public class DashboardView {
         VBox appLayout = new VBox(titleBar, root);
         VBox.setVgrow(root, Priority.ALWAYS);
 
-        mainRoot.getChildren().addAll(appLayout);
+        // =========================================================
+        // IMPLEMENTACIÓN DE LA BURBUJA FLOTANTE Y EL WIDGET DE IA
+        // =========================================================
+        VBox chatContainer = new VBox();
+        chatContainer.setMaxSize(360, 520);
+        chatContainer.setVisible(false);
+        chatContainer.setManaged(false);
+
+        ChatBotView widgetIA = new ChatBotView();
+        chatContainer.getChildren().add(widgetIA.getView(() -> {
+            FadeTransition ftOut = new FadeTransition(Duration.millis(200), chatContainer);
+            ftOut.setToValue(0);
+            ftOut.setOnFinished(ev -> { chatContainer.setVisible(false); chatContainer.setManaged(false); });
+            ftOut.play();
+        }));
+
+        Button btnBurbujaIA = new Button("🤖");
+        btnBurbujaIA.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-size: 28px; -fx-background-radius: 50; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 2, 2);");
+        btnBurbujaIA.setPrefSize(65, 65);
+        btnBurbujaIA.setMinSize(65, 65);
+        btnBurbujaIA.setMaxSize(65, 65);
+
+        btnBurbujaIA.setOnAction(e -> {
+            boolean estaVisible = chatContainer.isVisible();
+            if (!estaVisible) {
+                chatContainer.setVisible(true);
+                chatContainer.setManaged(true);
+                FadeTransition ftIn = new FadeTransition(Duration.millis(200), chatContainer);
+                ftIn.setFromValue(0); ftIn.setToValue(1); ftIn.play();
+            } else {
+                FadeTransition ftOut = new FadeTransition(Duration.millis(200), chatContainer);
+                ftOut.setToValue(0);
+                ftOut.setOnFinished(ev -> { chatContainer.setVisible(false); chatContainer.setManaged(false); });
+                ftOut.play();
+            }
+        });
+
+        StackPane.setAlignment(btnBurbujaIA, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(btnBurbujaIA, new Insets(0, 30, 30, 0));
+
+        StackPane.setAlignment(chatContainer, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(chatContainer, new Insets(0, 30, 110, 0)); 
+
+        mainRoot.getChildren().addAll(appLayout, chatContainer, btnBurbujaIA);
         mainRoot.setStyle("-fx-background-color: -color-bg-base;");
 
+        // --- RENDERIZADO FINAL ---
         Scene scene = new Scene(mainRoot, 1300, 850);
         aplicarTemaGlobal(scene, correoUsuario);
         
@@ -262,7 +310,6 @@ public class DashboardView {
         HBox topBannerContent = new HBox(); topBannerContent.setPadding(new Insets(25, 40, 25, 40)); topBannerContent.setAlignment(Pos.CENTER_LEFT);
         VBox greetBox = new VBox(10); greetBox.setAlignment(Pos.CENTER_LEFT);
         
-        // CORRECCIÓN: TAMAÑOS FIJOS EN EL BANNER PARA NO DEFORMARSE
         Label lblGreet = new Label(getDynamicGreetingText() + ", " + primerNombre); 
         lblGreet.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: white; -fx-font-family: 'Segoe UI';");
         
@@ -288,7 +335,6 @@ public class DashboardView {
         
         VBox clockContainer = new VBox(-5); clockContainer.setAlignment(Pos.CENTER_RIGHT);
         
-        // CORRECCIÓN: TAMAÑOS FIJOS EN EL RELOJ Y FECHA
         Label lblClock = new Label(); 
         lblClock.setStyle("-fx-font-size: 42px; -fx-font-weight: bold; -fx-text-fill: white;"); 
         

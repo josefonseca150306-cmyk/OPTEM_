@@ -58,14 +58,14 @@ public class AjustesView {
 
         String colorFuerte = controller.getColorFuerte();
 
+        // --- CABECERA ESTANDARIZADA (SIMETRÍA CON AGENDA Y NOTAS) ---
         VBox headerBox = new VBox(5);
-        Label lblTitle = new Label("⚙ Ajustes y Personalización");
-        lblTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main;");
-        lblTitle.getStyleClass().add("lbl-titulo-banner"); 
+        Label lblTitle = new Label("Ajustes y Personalización");
+        lblTitle.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: -color-text-main;");
         
         Label lblSubtitle = new Label("Personaliza tu experiencia en Optem");
-        lblSubtitle.setStyle("-fx-text-fill: -color-text-muted;");
-        lblSubtitle.getStyleClass().add("lbl-text-pequeno"); 
+        lblSubtitle.setStyle("-fx-text-fill: -color-text-muted; -fx-font-size: 14px;");
+        
         headerBox.getChildren().addAll(lblTitle, lblSubtitle);
 
         Map<String, String> datosDB = controller.getPerfilDesdeMock();
@@ -208,11 +208,9 @@ public class AjustesView {
         VBox texts = new VBox(2, lbl, lblHelp); Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS); row.getChildren().addAll(texts, spacer); return row; 
     }
 
-    // --- CORRECCIÓN FINAL PARA EL RECUADRO BLANCO DE NOTIFICACIONES ---
     private RadioButton createStyledRadioButton(String text, ToggleGroup group) {
         RadioButton rb = new RadioButton(text); 
         rb.setToggleGroup(group); 
-        // Forzamos explícitamente el fondo a transparente para solucionar el bug de JavaFX en modo oscuro
         rb.setStyle("-fx-text-fill: -color-text-main; -fx-background-color: transparent; -fx-control-inner-background: transparent; -fx-cursor: hand;"); 
         return rb;
     }

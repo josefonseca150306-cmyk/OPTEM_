@@ -34,7 +34,6 @@ public class ReinscripcionView extends BorderPane {
     private final AdminController adminController = new AdminController();
     private final ReinscripcionController controller = new ReinscripcionController();
 
-    // Variables unificadas y limpias (sin errores ni advertencias)
     private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder;
     private final Map<String, ComboBox<String>> combosMaterias = new HashMap<>();
     private GridPane gridHorario;
@@ -45,16 +44,16 @@ public class ReinscripcionView extends BorderPane {
         this.setPadding(new Insets(20, 30, 20, 30));
         this.setStyle("-fx-background-color: transparent;");
 
-        // --- CABECERA CON BOTÓN LIMPIAR ---
+        // --- CABECERA ESTANDARIZADA (SIMETRÍA TOTAL) ---
         BorderPane header = new BorderPane();
         VBox titleBox = new VBox(5);
-        Label titulo = new Label("📑 Reinscripción ISW (6to Semestre)");
-        titulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-family: 'Segoe UI Emoji';");
-        titulo.getStyleClass().add("lbl-titulo-banner"); 
+        
+        Label titulo = new Label("Reinscripción ISW (6to Semestre)");
+        titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
         
         Label subtitulo = new Label("Arma tu horario. Cuidado con los empalmes.");
-        subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + ";");
-        subtitulo.getStyleClass().add("lbl-text-normal");
+        subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
+        
         titleBox.getChildren().addAll(titulo, subtitulo);
         header.setLeft(titleBox);
 
@@ -455,9 +454,7 @@ public class ReinscripcionView extends BorderPane {
         String correoActual = prefs.get("LAST_ACTIVE_ACCOUNT", "");
         boolean isDark = prefs.getBoolean("PREF_DARK_MODE_" + correoActual, false);
         
-        // CORRECCIÓN APLICADA: Variable unificada a colorFuerte
         colorFuerte = prefs.get("PREF_ACCENT_COLOR_" + correoActual, "#3D5A4D");
-
         colorBgBase = isDark ? "#121212" : "#f1f5f9";
         colorBgPanel = isDark ? "#1e1e1e" : "#ffffff";
         colorTextMain = isDark ? "#f8f9fa" : "#1e293b";

@@ -50,13 +50,14 @@ public class ActividadesView extends VBox {
         this.setSpacing(25);
         this.setStyle("-fx-background-color: transparent;");
 
-        Label lblTitulo = new Label("🎯 Gestión de Actividades Personales");
-        lblTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-family: 'Segoe UI Emoji';");
-        lblTitulo.getStyleClass().add("lbl-titulo-banner");
+        // --- CABECERA ESTANDARIZADA (SIMETRÍA CON AGENDA, NOTAS Y TAREAS) ---
+        // Título limpio, sin emoji, negrita pesada y 28px
+        Label lblTitulo = new Label("Gestión de Actividades Personales");
+        lblTitulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
 
-        Label lblSubtitulo = new Label("Crea, edita y filtra tus eventos. Las Tareas de profesores se gestionan en el Kanban.");
-        lblSubtitulo.setStyle("-fx-text-fill: " + colorTextMuted + ";");
-        lblSubtitulo.getStyleClass().add("lbl-text-normal");
+        // Subtítulo a 14px
+        Label lblSubtitulo = new Label("Crea, edita y filtra tus eventos.");
+        lblSubtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
 
         VBox header = new VBox(5, lblTitulo, lblSubtitulo);
 
