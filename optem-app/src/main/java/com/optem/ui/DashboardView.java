@@ -98,37 +98,79 @@ public class DashboardView {
         String colorFuerte = controller.getColorFuerte();
         boolean animacionesActivas = controller.isAnimacionesActivas();
         
-        // --- CONTENEDOR MAESTRO --- (Permite que el chat flote por encima)
+        boolean wasShowing = stage.isShowing();
+        
         StackPane mainRoot = new StackPane();
         root = new BorderPane();
         
-        if (!stage.isShowing()) { stage.initStyle(StageStyle.UNDECORATED); }
+        if (!wasShowing) { stage.initStyle(StageStyle.UNDECORATED); }
         
-        // --- BARRA DE TÍTULO SUPERIOR ---
-        HBox titleBar = new HBox(15); titleBar.setAlignment(Pos.CENTER_RIGHT); titleBar.setPadding(new Insets(10, 15, 5, 0));
+        // ==================================================
+        // BARRA DE TÍTULO PROTEGIDA (Nunca se hace pequeña)
+        // ==================================================
+        HBox titleBar = new HBox(15); 
+        titleBar.setAlignment(Pos.CENTER_RIGHT); 
+        titleBar.setPadding(new Insets(0, 15, 0, 0));
         titleBar.setStyle("-fx-background-color: -color-bg-panel; -fx-border-color: -color-border; -fx-border-width: 0 0 1 0;");
         
-        titleBar.setOnMousePressed(event -> { xOffset = event.getSceneX(); yOffset = event.getSceneY(); });
-        titleBar.setOnMouseDragged(event -> { if (!isMaximized) { stage.setX(event.getScreenX() - xOffset); stage.setY(event.getScreenY() - yOffset); } });
+        // Altura estricta para evitar que la ventana se coma los botones al minimizar
+        titleBar.setMinHeight(40);
+        titleBar.setPrefHeight(40);
+        
+        Button btnMaxim = new Button(isMaximized ? "🗗" : "🗖");
 
-        String btnControlStyle = "-fx-background-color: transparent; -fx-text-fill: -color-text-muted; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 5 15;";
+        titleBar.setOnMousePressed(event -> { 
+            xOffset = event.getSceneX(); 
+            yOffset = event.getSceneY(); 
+        });
+        
+        titleBar.setOnMouseDragged(event -> { 
+            if (isMaximized) {
+                isMaximized = false;
+                btnMaxim.setText("🗖");
+                Screen screen = Screen.getPrimary();
+                Rectangle2D bounds = screen.getVisualBounds();
+                double w = bounds.getWidth() * 0.85;
+                double h = bounds.getHeight() * 0.85;
+                stage.setWidth(w);
+                stage.setHeight(h);
+                // Centramos el ratón en la barra al arrastrar desde pantalla completa
+                xOffset = w / 2;
+                yOffset = 20; 
+            }
+            stage.setX(event.getScreenX() - xOffset); 
+            stage.setY(event.getScreenY() - yOffset); 
+        });
+
+        String btnControlStyle = "-fx-background-color: transparent; -fx-text-fill: -color-text-muted; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 15;";
         String btnControlHover = "-fx-background-color: rgba(128,128,128,0.2); -fx-text-fill: -color-text-main; -fx-background-radius: 5;";
         
         Button btnMinimizar = new Button("—"); btnMinimizar.setStyle(btnControlStyle);
         btnMinimizar.setOnMouseEntered(e -> btnMinimizar.setStyle(btnControlStyle + btnControlHover)); btnMinimizar.setOnMouseExited(e -> btnMinimizar.setStyle(btnControlStyle));
         btnMinimizar.setOnAction(e -> stage.setIconified(true));
 
-        Button btnMaxim = new Button("🗗"); btnMaxim.setStyle(btnControlStyle);
+        btnMaxim.setStyle(btnControlStyle);
         btnMaxim.setOnMouseEntered(e -> btnMaxim.setStyle(btnControlStyle + btnControlHover)); btnMaxim.setOnMouseExited(e -> btnMaxim.setStyle(btnControlStyle));
         btnMaxim.setOnAction(e -> {
-            Screen screen = Screen.getPrimary(); Rectangle2D bounds = screen.getVisualBounds();
+            Screen screen = Screen.getPrimary(); 
+            Rectangle2D bounds = screen.getVisualBounds();
             if (isMaximized) {
-                stage.setX(bounds.getWidth() * 0.1); stage.setY(bounds.getHeight() * 0.1);
-                stage.setWidth(bounds.getWidth() * 0.8); stage.setHeight(bounds.getHeight() * 0.8);
-                isMaximized = false; btnMaxim.setText("🗖"); 
+                // Cálculo exacto del tamaño de ventana restaurada
+                double w = bounds.getWidth() * 0.85;
+                double h = bounds.getHeight() * 0.85;
+                stage.setWidth(w); 
+                stage.setHeight(h);
+                stage.setX(bounds.getMinX() + (bounds.getWidth() - w) / 2);
+                stage.setY(bounds.getMinY() + (bounds.getHeight() - h) / 2);
+                isMaximized = false; 
+                btnMaxim.setText("🗖"); 
             } else {
-                stage.setX(bounds.getMinX()); stage.setY(bounds.getMinY()); stage.setWidth(bounds.getWidth()); stage.setHeight(bounds.getHeight());
-                isMaximized = true; btnMaxim.setText("🗗");
+                stage.setX(bounds.getMinX()); 
+                stage.setY(bounds.getMinY()); 
+                stage.setWidth(bounds.getWidth()); 
+                stage.setHeight(bounds.getHeight());
+                isMaximized = true; 
+                btnMaxim.setText("🗗");
             }
         });
 
@@ -220,12 +262,11 @@ public class DashboardView {
 
         root.setLeft(sidebar); 
 
-        VBox appLayout = new VBox(titleBar, root);
+        // Aseguramos que la barra de título nunca se aplaste
+        VBox appLayout = new VBox(0, titleBar, root);
         VBox.setVgrow(root, Priority.ALWAYS);
+        VBox.setVgrow(titleBar, Priority.NEVER);
 
-        // =========================================================
-        // IMPLEMENTACIÓN DE LA BURBUJA FLOTANTE Y EL WIDGET DE IA
-        // =========================================================
         VBox chatContainer = new VBox();
         chatContainer.setMaxSize(360, 520);
         chatContainer.setVisible(false);
@@ -269,7 +310,6 @@ public class DashboardView {
         mainRoot.getChildren().addAll(appLayout, chatContainer, btnBurbujaIA);
         mainRoot.setStyle("-fx-background-color: -color-bg-base;");
 
-        // --- RENDERIZADO FINAL ---
         Scene scene = new Scene(mainRoot, 1300, 850);
         aplicarTemaGlobal(scene, correoUsuario);
         
@@ -278,10 +318,20 @@ public class DashboardView {
         stage.setScene(scene); 
         
         Platform.runLater(() -> { 
-            Screen screen = Screen.getPrimary(); Rectangle2D bounds = screen.getVisualBounds();
-            stage.setX(bounds.getMinX()); stage.setY(bounds.getMinY());
-            stage.setWidth(bounds.getWidth()); stage.setHeight(bounds.getHeight());
-            stage.show(); stage.toFront(); 
+            if (!wasShowing) {
+                Screen screen = Screen.getPrimary(); 
+                Rectangle2D bounds = screen.getVisualBounds();
+                stage.setX(bounds.getMinX()); 
+                stage.setY(bounds.getMinY());
+                stage.setWidth(bounds.getWidth()); 
+                stage.setHeight(bounds.getHeight());
+                isMaximized = true;
+                btnMaxim.setText("🗗");
+                stage.show(); 
+                stage.toFront(); 
+            } else {
+                stage.show(); 
+            }
         });
     }
     
@@ -561,10 +611,36 @@ public class DashboardView {
     }
 
     private VBox createSectionCard(String title, String sub, String imgPath, double offsetY) {
-        VBox card = new VBox(0); card.setPrefSize(280, 200); 
+        // CORRECCIÓN: Se fuerzan tamaños exactos e inamovibles para las tarjetas (280x200)
+        VBox card = new VBox(0); 
+        card.setPrefSize(280, 200); 
+        card.setMinSize(280, 200);
+        card.setMaxSize(280, 200);
         card.setStyle("-fx-background-color: -color-bg-panel; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0, 2, 2); -fx-cursor: hand;");
-        Pane imgContainer = new Pane(); imgContainer.setPrefSize(280, 120);
-        try { InputStream is = getClass().getResourceAsStream(imgPath); if (is != null) { ImageView iv = new ImageView(new Image(is)); iv.setPreserveRatio(true); iv.setFitWidth(280); iv.setLayoutY(offsetY); Rectangle clip = new Rectangle(280, 120); clip.setArcWidth(30); clip.setArcHeight(30); imgContainer.setClip(clip); imgContainer.getChildren().add(iv); } } catch(Exception e) { imgContainer.setStyle("-fx-background-color: -color-bg-base; -fx-background-radius: 15 15 0 0;"); }
+        
+        Pane imgContainer = new Pane(); 
+        imgContainer.setPrefSize(280, 120);
+        imgContainer.setMinSize(280, 120);
+        imgContainer.setMaxSize(280, 120);
+        
+        try { 
+            InputStream is = getClass().getResourceAsStream(imgPath); 
+            if (is != null) { 
+                ImageView iv = new ImageView(new Image(is)); 
+                iv.setPreserveRatio(true); 
+                iv.setFitWidth(280); 
+                iv.setLayoutY(offsetY); 
+                
+                Rectangle clip = new Rectangle(280, 120); 
+                clip.setArcWidth(30); 
+                clip.setArcHeight(30); 
+                imgContainer.setClip(clip); 
+                imgContainer.getChildren().add(iv); 
+            } 
+        } catch(Exception e) { 
+            imgContainer.setStyle("-fx-background-color: -color-bg-base; -fx-background-radius: 15 15 0 0;"); 
+        }
+        
         VBox info = new VBox(2); info.setPadding(new Insets(15)); Label t = new Label(title); t.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main;"); t.getStyleClass().add("lbl-text-normal"); Label s = new Label(sub); s.setStyle("-fx-text-fill: -color-text-muted;"); s.getStyleClass().add("lbl-text-pequeno"); info.getChildren().addAll(t, s); card.getChildren().addAll(imgContainer, info);
         ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), card); scaleIn.setToX(1.03); scaleIn.setToY(1.03); ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), card); scaleOut.setToX(1.0); scaleOut.setToY(1.0); card.setOnMouseEntered(e -> scaleIn.playFromStart()); card.setOnMouseExited(e -> scaleOut.playFromStart()); return card;
     }
