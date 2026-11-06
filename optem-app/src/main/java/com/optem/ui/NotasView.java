@@ -44,13 +44,11 @@ public class NotasView {
         layoutMain.setPadding(new Insets(30, 40, 30, 40));
         layoutMain.setStyle("-fx-background-color: transparent;");
 
-        // --- CABECERA ESTANDARIZADA (SIMETRÍA ABSOLUTA CON AGENDA Y TAREAS) ---
         HBox header = new HBox(20);
         header.setAlignment(Pos.CENTER_LEFT);
         
         VBox titleBox = new VBox(5);
         
-        // Título limpio, sin emoji y sin forzar fuente extraña, solo negrita y tamaño
         Label titulo = new Label("Mi Cuaderno de Notas");
         titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
         
@@ -67,7 +65,6 @@ public class NotasView {
 
         header.getChildren().addAll(titleBox, spacer, btnNuevo);
 
-        // --- CUADRÍCULA ESTILO GOOGLE KEEP ---
         gridNotas = new FlowPane();
         gridNotas.setHgap(20);
         gridNotas.setVgap(20);

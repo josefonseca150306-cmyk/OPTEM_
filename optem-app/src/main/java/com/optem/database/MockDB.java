@@ -5,16 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * BASE DE DATOS SIMULADA (MOCK)
- * Esta clase provee datos falsos/estáticos para probar la interfaz visual.
- * Cuando el servidor real esté listo, esta clase se puede eliminar o ignorar.
- */
 public class MockDB {
 
-    // ==========================================
-    // 1. CREDENCIALES MAESTRAS (Tu acceso universal)
-    // ==========================================
     private static final String CORREO_UNIVERSAL = "jfonsecal001@alumno.uaemex.mx";
     private static final String CUENTA_ESTUDIANTE_MAESTRO = "2113911";
     private static final String CUENTA_ADMINISTRADOR = "1503061";
@@ -31,9 +23,6 @@ public class MockDB {
         return false;
     }
 
-    // ==========================================
-    // 2. DATOS DEL PERFIL DEL USUARIO
-    // ==========================================
     public static Map<String, String> obtenerPerfilUsuario() {
         Map<String, String> perfil = new HashMap<>();
         perfil.put("nombre_completo", "Jose Antonio Fonseca Labastida");
@@ -44,9 +33,6 @@ public class MockDB {
         return perfil;
     }
 
-    // ==========================================
-    // 3. MATERIAS Y HORARIOS (Quinto Periodo)
-    // ==========================================
     public static List<Map<String,String>> obtenerMateriasRegistradas() {
         List<Map<String,String>> materias = new ArrayList<>();
 
@@ -70,7 +56,6 @@ public class MockDB {
         mat.put("grupo", grupo);
         mat.put("horario", horario);
         
-        // --- SIMULACIÓN DE DATOS DINÁMICOS POR MATERIA ---
         if (nombre.contains("SOFTWARE") || nombre.contains("BASES")) {
             mat.put("reunion", "Teams - Jueves 11:30 AM");
             mat.put("tarea", "Práctica 3 (Vence hoy 23:59)");
@@ -87,23 +72,17 @@ public class MockDB {
         return mat;
     }
 
-    // =========================================================================
-    // DATOS DE REINSCRIPCIÓN (PERIODO 6, REZAGOS Y ADELANTOS)
-    // =========================================================================
     public static List<com.optem.controllers.ReinscripcionController.MateriaDTO> obtenerMateriasReinscripcion() {
         List<com.optem.controllers.ReinscripcionController.MateriaDTO> lista = new java.util.ArrayList<>();
         
-        // REGULARES
         lista.add(new com.optem.controllers.ReinscripcionController.MateriaDTO("Bases de Datos Avanzadas", "8 créditos", false, "#2196F3", "REGULAR", new String[]{"— No cursar —", "G6A · Lun/Mié 07:00-09:00", "G6B · Mar/Jue 13:00-15:00", "G6C · Vie 07:00-11:00"}));
         lista.add(new com.optem.controllers.ReinscripcionController.MateriaDTO("Graficación", "8 créditos", false, "#00BCD4", "REGULAR", new String[]{"— No cursar —", "G6A · Mar/Jue 07:00-09:00", "G6B · Lun/Mié 15:00-17:00", "G6C · Sáb 08:00-12:00"}));
         lista.add(new com.optem.controllers.ReinscripcionController.MateriaDTO("Desarrollo de Aplicaciones Web", "8 créditos", true, "#3F51B5", "REGULAR", new String[]{"— No cursar —", "G6A · Lun/Mié 09:00-11:00", "G6B · Mar/Jue 17:00-19:00"}));
         lista.add(new com.optem.controllers.ReinscripcionController.MateriaDTO("Arquitectura de Software", "8 créditos", true, "#3F51B5", "REGULAR", new String[]{"— No cursar —", "G6A · Mar/Jue 09:00-11:00", "G6B (Línea) · Vie 15:00-19:00"}));
         lista.add(new com.optem.controllers.ReinscripcionController.MateriaDTO("Pruebas y Manten. de Software", "6 créditos", true, "#009688", "REGULAR", new String[]{"— No cursar —", "G6A · Lun/Mié 11:00-13:00", "G6B · Mar/Jue 15:00-17:00"}));
 
-        // REZAGADAS
         lista.add(new com.optem.controllers.ReinscripcionController.MateriaDTO("Probabilidad y Estadística (2da Inscripción)", "8 créditos", false, "#D32F2F", "REZAGO", new String[]{"— No cursar —", "G4A · Mar/Jue 11:00-13:00", "G4B · Vie 11:00-15:00"}));
 
-        // ADELANTAR
         lista.add(new com.optem.controllers.ReinscripcionController.MateriaDTO("Datawarehouse (Adelanto 8vo)", "6 créditos", false, "#9C27B0", "ADELANTO", new String[]{"— No cursar —", "G8A · Lun/Mié 13:00-15:00", "G8B · Sáb 13:00-17:00"}));
         lista.add(new com.optem.controllers.ReinscripcionController.MateriaDTO("Calidad del Software (Adelanto 8vo)", "6 créditos", true, "#9C27B0", "ADELANTO", new String[]{"— No cursar —", "G8A · Mar/Jue 11:00-13:00", "G8B (Línea) · Vie 15:00-19:00"}));
 

@@ -39,7 +39,6 @@ public class ReunionesMaestroView {
         layoutMain.setPadding(new Insets(30, 40, 30, 40));
         layoutMain.setStyle("-fx-background-color: transparent;");
 
-        // --- 1. CABECERA ---
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
         
@@ -58,7 +57,6 @@ public class ReunionesMaestroView {
 
         header.getChildren().addAll(titleBox, spacer, btnNuevaSala);
 
-        // --- 2. SALAS PROGRAMADAS PARA HOY ---
         Label lblSalasHoy = new Label("🔴 Clases de Hoy (Anfitrión)");
         lblSalasHoy.setStyle("-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: " + colorTextMain + ";");
 
@@ -122,7 +120,6 @@ public class ReunionesMaestroView {
         if (estaPendiente) {
             btnAccion.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 8; -fx-cursor: hand;");
             
-            // CONEXIÓN PARA ABRIR LA SALA VIRTUAL DEL MAESTRO
             btnAccion.setOnAction(e -> {
                 NotificacionManager.mostrarNotificacion("Abriendo " + plataforma, "Iniciando sesión como anfitrión para la clase de " + titulo + "...", "INFO");
                 btnAccion.setText("Sala Activa");
@@ -142,9 +139,6 @@ public class ReunionesMaestroView {
         return card;
     }
 
-    // =========================================================================
-    // NUEVA FUNCIONALIDAD: AULA VIRTUAL DEL ANFITRIÓN (MAESTRO)
-    // =========================================================================
     private void abrirAulaVirtualMaestro(String materia, String grupo, String plataforma, Button btnTrigger, Window owner) {
         Stage modal = new Stage();
         modal.initOwner(owner);
@@ -156,7 +150,6 @@ public class ReunionesMaestroView {
         layout.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorFuerte + "; -fx-border-width: 2; -fx-background-radius: 12; -fx-border-radius: 12; -fx-font-size: " + fontSize + ";");
         layout.setPadding(new Insets(15));
 
-        // Cabecera de la Sala
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
         Label lblTit = new Label("🔴 " + materia + " (" + plataforma + ")");
@@ -173,7 +166,6 @@ public class ReunionesMaestroView {
         layout.setTop(header);
         BorderPane.setMargin(header, new Insets(0, 0, 15, 0));
 
-        // Centro: Área de Video
         StackPane videoArea = new StackPane();
         videoArea.setStyle("-fx-background-color: #0f172a; -fx-background-radius: 8;");
         videoArea.setPrefSize(500, 350);
@@ -182,7 +174,6 @@ public class ReunionesMaestroView {
         videoArea.getChildren().add(lblVideoTxt);
         layout.setCenter(videoArea);
 
-        // Derecha: Panel de Participantes y Controles de Grupo
         VBox panelRight = new VBox(10);
         panelRight.setPrefWidth(220);
         panelRight.setPadding(new Insets(0, 0, 0, 15));
@@ -210,7 +201,6 @@ public class ReunionesMaestroView {
         panelRight.getChildren().addAll(lblPart, scrollPart, btnMuteAll);
         layout.setRight(panelRight);
 
-        // Inferior: Controles de Comunicación y Finalización
         HBox footer = new HBox(15);
         footer.setAlignment(Pos.CENTER);
         footer.setPadding(new Insets(15, 0, 0, 0));

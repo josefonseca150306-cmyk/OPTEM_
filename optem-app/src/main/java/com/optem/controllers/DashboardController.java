@@ -35,7 +35,6 @@ public class DashboardController {
         return MockDB.obtenerPerfilUsuario().get("nombre_completo"); 
     }
 
-    // --- PREFERENCIAS ---
     public String getRolUsuario() { return prefs.get("ROLE_" + correoActual, "ESTUDIANTE"); }
     public String getFotoPerfil() { return prefs.get("USER_PHOTO_PATH_" + correoActual, ""); }
     public String getColorFuerte() { return prefs.get("PREF_ACCENT_COLOR_" + correoActual, "#3D5A4D"); }
@@ -46,17 +45,15 @@ public class DashboardController {
     public boolean isVozActivo() { return prefs.getBoolean("PREF_ACC_VOICE_" + correoActual, false); }
     public String getNivelNotificaciones() { return prefs.get("PREF_NOTIFICATIONS_" + correoActual, "COMPLETO"); }
 
-    // --- GESTOR DE NOTIFICACIONES (Lógica) ---
     public boolean debeMostrarNotificacion(String tipoNotificacion) {
         String nivel = getNivelNotificaciones();
         if (nivel.equals("APAGADO")) return false;
         if (nivel.equals("PRIORITARIO")) {
             return tipoNotificacion.equals("REUNION") || tipoNotificacion.equals("URGENTE");
         }
-        return true; // COMPLETO: Muestra todo
+        return true; 
     }
 
-    // --- GESTIÓN DE CUENTAS ---
     public List<String> getCuentasExtras() {
         List<String> extras = new ArrayList<>();
         for (String email : prefs.get("ACCOUNTS_LIST", "").split(",")) {
@@ -79,7 +76,6 @@ public class DashboardController {
     }
     public void cerrarSesion() { prefs.put("LAST_ACTIVE_ACCOUNT", ""); }
 
-    // --- MOTOR DE VOZ ---
     public void hablar(String text) {
         if (prefs.getBoolean("PREF_ACC_TTS_" + correoActual, false)) {
             Thread ttsThread = new Thread(() -> {
@@ -101,7 +97,6 @@ public class DashboardController {
         return "DESCONOCIDO";
     }
 
-    // --- MULTIMEDIA Y LECTURA ---
     public String obtenerPistaMusicalActual() {
         try {
             File musicFile = new File("reproduccion_actual.txt");

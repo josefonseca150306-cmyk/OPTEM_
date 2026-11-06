@@ -39,7 +39,6 @@ public class ActividadesController {
         return true;
     }
 
-    // NUEVO MÉTODO: Permite guardar los cambios de una actividad editada
     public boolean actualizarActividad(String id, String titulo, String tipo, String descripcion, LocalDate fecha, LocalTime hora) {
         if (titulo == null || titulo.trim().isEmpty() || tipo == null) return false;
         

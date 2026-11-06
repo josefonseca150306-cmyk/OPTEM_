@@ -1,6 +1,7 @@
 package com.optem.controllers;
 
 import com.optem.ui.AddAccountDialog.UserData;
+
 import javafx.scene.control.Label;
 
 public class AddAccountController {
@@ -23,7 +24,6 @@ public class AddAccountController {
             return null;
         }
 
-        // Autocompletado lógico del dominio
         if (!usuario.contains("@")) {
             if (usuario.matches("\\d+")) {
                 usuario += "@alumno.uaemex.mx";
@@ -32,7 +32,6 @@ public class AddAccountController {
             }
         }
 
-        // Si todo está bien, ocultamos el error (por si estaba visible) y devolvemos los datos
         lblError.setVisible(false);
         return new UserData(usuario, password, nombre, apellido);
     }

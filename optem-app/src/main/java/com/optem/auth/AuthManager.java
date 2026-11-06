@@ -32,14 +32,12 @@ public class AuthManager {
     public Map<String, String> iniciarSesion(String correo, String numCuenta) {
         Map<String, String> res = new HashMap<>();
         
-        //formato institucional, puede entrar para el profesor
         if (!Pattern.compile(patternInstitucional).matcher(correo).matches()) {
             res.put("status", "error");
             res.put("message", "Usa un correo @alumno.uaemex.mx o @uaemex.mx");
             return res;
         }
 
-        // Buscar si es uno de los alumnos con datos guardados
         Optional<Map<String, String>> usuario = usuariosRegistrados.stream()
                 .filter(u -> u.get("correo").equalsIgnoreCase(correo) && u.get("num_cuenta").equals(numCuenta))
                 .findFirst();
@@ -47,12 +45,11 @@ public class AuthManager {
         if (usuario.isPresent()) {
             res.put("status", "success");
             res.put("nombre", usuario.get().get("nombre"));
-            res.put("file_key", usuario.get().get("num_cuenta")); // Usa su cuenta real
+            res.put("file_key", usuario.get().get("num_cuenta"));
         } else {
-            // Es un usuario institucional nuevo 
             res.put("status", "success");
             res.put("nombre", "Invitado UAEMéx");
-            res.put("file_key", "default"); // Carga datos genéricos
+            res.put("file_key", "default"); 
         }
         return res;
     }

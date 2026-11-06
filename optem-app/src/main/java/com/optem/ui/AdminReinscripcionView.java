@@ -25,14 +25,12 @@ public class AdminReinscripcionView {
     private final DashboardController controller = new DashboardController();
     private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder;
 
-    // Estado global de la reinscripción
     private boolean periodoAbierto = false;
     private Preferences prefsGlobales;
 
     public VBox getView() {
         leerPreferencias();
         
-        // Usamos un nodo global para que los estudiantes puedan leer este estado
         prefsGlobales = Preferences.userRoot().node("optem_erp_global");
         periodoAbierto = prefsGlobales.getBoolean("REINSCRIPCION_ABIERTA", false);
 
@@ -40,7 +38,6 @@ public class AdminReinscripcionView {
         layoutMain.setPadding(new Insets(30, 40, 30, 40));
         layoutMain.setStyle("-fx-background-color: transparent;");
 
-        // --- 1. CABECERA ---
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
         
@@ -59,7 +56,6 @@ public class AdminReinscripcionView {
 
         header.getChildren().addAll(titleBox, spacer, btnNotificar);
 
-        // --- 2. PANEL DE ESTADO Y CONTROL MAESTRO ---
         HBox controlBox = new HBox(20);
         controlBox.setAlignment(Pos.CENTER_LEFT);
         controlBox.setPadding(new Insets(25));
@@ -86,12 +82,10 @@ public class AdminReinscripcionView {
         Button btnToggleEstado = new Button(periodoAbierto ? "🔒 CERRAR PERIODO" : "🔓 HABILITAR REINSCRIPCIONES");
         btnToggleEstado.setStyle("-fx-background-color: " + (periodoAbierto ? "#ef4444" : "#10b981") + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 12 25; -fx-background-radius: 8; -fx-cursor: hand;");
         
-        // Lógica de Toggle
         btnToggleEstado.setOnAction(e -> {
             periodoAbierto = !periodoAbierto;
-            prefsGlobales.putBoolean("REINSCRIPCION_ABIERTA", periodoAbierto); // Se guarda globalmente
+            prefsGlobales.putBoolean("REINSCRIPCION_ABIERTA", periodoAbierto); 
             
-            // Actualizar UI
             dotEstado.setFill(Color.web(periodoAbierto ? "#10b981" : "#ef4444"));
             lblEstadoVal.setText(periodoAbierto ? "PERIODO DE REINSCRIPCIÓN: ABIERTO" : "PERIODO DE REINSCRIPCIÓN: CERRADO");
             lblEstadoVal.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: " + (periodoAbierto ? "#10b981" : "#ef4444") + ";");
@@ -105,7 +99,6 @@ public class AdminReinscripcionView {
 
         controlBox.getChildren().addAll(infoEstado, spacer2, btnToggleEstado);
 
-        // --- 3. CONFIGURACIÓN DEL CICLO ESCOLAR ---
         HBox confProgesoBox = new HBox(20);
 
         VBox configBox = new VBox(15);
@@ -138,7 +131,6 @@ public class AdminReinscripcionView {
 
         configBox.getChildren().addAll(lblConfTit, fechasBox, datosBox, btnGuardarConf);
 
-        // --- 4. KPI DE PROGRESO DE MATRÍCULA ---
         VBox progresoBox = new VBox(15);
         HBox.setHgrow(progresoBox, Priority.ALWAYS);
         progresoBox.setPadding(new Insets(20));
@@ -166,7 +158,6 @@ public class AdminReinscripcionView {
 
         confProgesoBox.getChildren().addAll(configBox, progresoBox);
 
-        // Agregamos todo
         layoutMain.getChildren().addAll(header, controlBox, confProgesoBox);
         
         ScrollPane scroll = new ScrollPane(layoutMain);

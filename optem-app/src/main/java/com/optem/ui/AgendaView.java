@@ -165,9 +165,6 @@ public class AgendaView {
         return btn;
     }
 
-    // ==========================================
-    // PANEL LATERAL Y FILTROS RÁPIDOS
-    // ==========================================
     private VBox crearPanelLateralIzquierdo() {
         VBox panel = new VBox(20);
         panel.setPrefWidth(280); panel.setMaxWidth(280);
@@ -316,9 +313,6 @@ public class AgendaView {
         else renderizarVistaMes(YearMonth.from(fechaActual));
     }
 
-    // ==========================================
-    // VISTA DIARIA
-    // ==========================================
     private void renderizarVistaDia(LocalDate dia) {
         Label lblDia = new Label(dia.format(DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM")).toUpperCase());
         lblDia.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 18px; -fx-padding: 20;");
@@ -401,9 +395,6 @@ public class AgendaView {
         return card;
     }
 
-    // ==========================================
-    // VISTA SEMANAL
-    // ==========================================
     private void renderizarVistaSemana(LocalDate inicioSemana) {
         Label lblSemana = new Label("SEMANA DEL " + inicioSemana.format(DateTimeFormatter.ofPattern("d MMM")) + " AL " + inicioSemana.plusDays(6).format(DateTimeFormatter.ofPattern("d MMM yyyy")).toUpperCase());
         lblSemana.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 18px; -fx-padding: 20;");

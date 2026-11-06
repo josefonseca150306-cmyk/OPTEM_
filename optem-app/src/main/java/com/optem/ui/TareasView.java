@@ -48,17 +48,14 @@ public class TareasView {
             layoutMain.setPadding(new Insets(30, 40, 30, 40));
             layoutMain.setStyle("-fx-background-color: transparent;");
 
-            // --- CABECERA ESTANDARIZADA (SIMETRÍA CON AGENDA Y NOTAS) ---
             HBox header = new HBox(20);
             header.setAlignment(Pos.CENTER_LEFT);
             
             VBox titleBox = new VBox(5);
             Label titulo = new Label("Tablero de Tareas");
-            // Estilos fijos en línea para garantizar consistencia (28px)
             titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
             
             Label subtitulo = new Label("Organiza tus pendientes y aumenta tu XP Semanal");
-            // Estilos fijos en línea para el subtítulo (14px)
             subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
             
             titleBox.getChildren().addAll(titulo, subtitulo);
@@ -81,7 +78,6 @@ public class TareasView {
 
             header.getChildren().addAll(titleBox, spacer, btnNuevaTarea);
 
-            // --- TABLERO KANBAN ---
             HBox kanbanBoard = new HBox(20);
             kanbanBoard.setAlignment(Pos.TOP_CENTER);
             VBox.setVgrow(kanbanBoard, Priority.ALWAYS);

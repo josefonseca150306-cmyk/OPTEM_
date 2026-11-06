@@ -46,7 +46,6 @@ public class InicioMaestroView {
         mainContent.setPadding(new Insets(30, 45, 30, 45));
         mainContent.setStyle("-fx-background-color: transparent;");
 
-        // --- 1. BANNER DEL MAESTRO ---
         Map<String, String> perfil = controller.getPerfilUsuario();
         String primerNombre = perfil.get("nombre_completo").split(" ")[0];
 
@@ -86,7 +85,6 @@ public class InicioMaestroView {
         bannerContainer.getChildren().addAll(bannerBackground, topBannerContent);
         bannerContainer.setEffect(new DropShadow(15, 0, 8, Color.rgb(0,0,0,0.15)));
 
-        // --- 2. TARJETAS DE MÉTRICAS ---
         HBox metricasBox = new HBox(20);
         metricasBox.setAlignment(Pos.CENTER);
         
@@ -96,7 +94,6 @@ public class InicioMaestroView {
             crearTarjetaMetrica("📅", "Próxima Clase", "13:00 - Ing. Software", "#f59e0b")
         );
 
-        // --- 3. SECCIÓN: CLASES IMPARTIENDO ---
         VBox materiasPane = new VBox(15); 
         materiasPane.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-padding: 25; -fx-background-radius: 15; -fx-border-color: " + colorBorder + "; -fx-border-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 2, 0);");
         
@@ -208,9 +205,6 @@ public class InicioMaestroView {
         return row;
     }
 
-    // =========================================================
-    // MODAL DE DETALLES DE CLASE (MÉTRICAS Y LISTA)
-    // =========================================================
     private void mostrarDetallesClase(String materia, String grupo, int inscritos, Window owner) {
         Stage modal = new Stage();
         modal.initOwner(owner);
@@ -218,9 +212,6 @@ public class InicioMaestroView {
 
         VBox layout = new VBox(20);
         layout.setPadding(new Insets(25));
-        
-        // CORRECCIÓN DE BUG DE FONDO BLANCO: 
-        // Fusionamos los estilos de fondo y el tamaño de letra en una sola instrucción.
         String fontPref = new AjustesController("").getPrefString("PREF_FONT_SIZE", "Normal");
         String fontSize = fontPref.equals("Pequeño") ? "12px" : fontPref.equals("Grande") ? "17px" : "14px";
         
@@ -233,7 +224,6 @@ public class InicioMaestroView {
             "-fx-font-size: " + fontSize + ";"
         );
 
-        // Cabecera
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
         VBox titulos = new VBox(2);
@@ -249,7 +239,6 @@ public class InicioMaestroView {
         btnCerrar.setOnAction(e -> modal.close());
         header.getChildren().addAll(titulos, spacer, btnCerrar);
 
-        // Contenido (Tareas y Alumnos)
         HBox contenido = new HBox(20);
         
         VBox colTareas = new VBox(15);
@@ -284,7 +273,6 @@ public class InicioMaestroView {
 
         contenido.getChildren().addAll(colTareas, colAlumnos);
 
-        // Footer y Botones de Acción Funcionales
         HBox footer = new HBox(15);
         footer.setAlignment(Pos.CENTER_RIGHT);
         
@@ -299,7 +287,6 @@ public class InicioMaestroView {
         btnCalificar.setOnAction(e -> {
             modal.close();
             NotificacionManager.mostrarNotificacion("Gestor de Tareas", "Redirigiendo al módulo de Calificación para " + materia + "...", "INFO");
-            // Aquí en el futuro llamaremos a TareasMaestroView.java
         });
         
         footer.getChildren().addAll(btnLista, btnCalificar);

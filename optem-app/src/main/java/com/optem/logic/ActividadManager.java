@@ -29,7 +29,6 @@ public class ActividadManager {
         this.usuarioActual = correoUsuario;
     }
 
-    // Generamos algunas tareas iniciales para que el tablero no se vea vacío
     private void cargarDatosDePrueba() {
         LocalDate hoy = LocalDate.now();
         listaActividades.add(new Actividad("1", "Práctica 3 de Redes", "Tarea", "Configurar VLANs en Cisco Packet Tracer.", hoy, LocalTime.of(23, 59), "REDES Y TELECOMUNICACIONES"));

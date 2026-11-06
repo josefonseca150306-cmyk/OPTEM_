@@ -39,7 +39,6 @@ public class AdminDocsView {
         btnGenerar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 8; -fx-cursor: hand;");
         header.getChildren().addAll(titleBox, spacer, btnGenerar);
 
-        // Carpetas Rápidas
         HBox foldersBox = new HBox(20);
         foldersBox.getChildren().addAll(
             crearCarpeta("🎓 Expedientes (Alumnos)", "420 Archivos"),

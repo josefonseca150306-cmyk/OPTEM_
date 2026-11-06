@@ -36,7 +36,6 @@ public class AdminIAView {
         subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
         titleBox.getChildren().addAll(titulo, subtitulo);
 
-        // Bloque de Configuración de API
         VBox configBox = new VBox(15);
         configBox.setPadding(new Insets(25));
         configBox.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12;");
@@ -63,7 +62,6 @@ public class AdminIAView {
         col2.getChildren().addAll(lblApi, txtApi);
         row1.getChildren().addAll(col1, col2);
 
-        // Bloque de Prompt del Sistema
         VBox promptBox = new VBox(5);
         Label lblPrompt = new Label("Instrucciones del Sistema (System Prompt)");
         lblPrompt.setStyle("-fx-text-fill: " + colorTextMuted + ";");

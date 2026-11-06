@@ -43,7 +43,6 @@ public class ReunionesView {
         layoutMain.setPadding(new Insets(30, 40, 30, 40));
         layoutMain.setStyle("-fx-background-color: transparent;");
 
-        // --- CABECERA ESTANDARIZADA (SIMETRÍA CON AGENDA Y NOTAS) ---
         HBox header = new HBox(20);
         header.setAlignment(Pos.CENTER_LEFT);
         
@@ -65,11 +64,9 @@ public class ReunionesView {
 
         header.getChildren().addAll(titleBox, spacerHeader, btnReunionRapida);
 
-        // --- CUERPO PRINCIPAL (Split) ---
         HBox bodySplit = new HBox(30);
         VBox.setVgrow(bodySplit, Priority.ALWAYS);
 
-        // COLUMNA IZQUIERDA: Búsqueda de Usuarios y Directorio
         VBox colDirectorio = new VBox(15);
         colDirectorio.setPrefWidth(400);
         colDirectorio.setPadding(new Insets(20));
@@ -93,7 +90,6 @@ public class ReunionesView {
         
         colDirectorio.getChildren().addAll(lblDirectorio, txtBuscar, scrollResultados);
 
-        // COLUMNA DERECHA: Grupos y Clases en Vivo
         VBox colGrupos = new VBox(15);
         HBox.setHgrow(colGrupos, Priority.ALWAYS);
         
@@ -164,13 +160,11 @@ public class ReunionesView {
         card.setPadding(new Insets(10));
         card.setStyle("-fx-background-color: " + colorBgBase + "; -fx-background-radius: 8; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8;");
 
-        // Avatar
         Circle avatar = new Circle(20, Color.web(colorFuerte, 0.2));
         Label inicial = new Label(usr.nombre.substring(0, 1).toUpperCase());
         inicial.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: " + colorFuerte + ";");
         StackPane avatarBox = new StackPane(avatar, inicial);
         
-        // Indicador de estado (Verde = Conectado, Rojo = Ocupado, Gris = Desconectado)
         Circle puntoEstado = new Circle(5);
         if (usr.estado.equals("Conectado")) puntoEstado.setFill(Color.web("#388E3C"));
         else if (usr.estado.equals("Ocupado")) puntoEstado.setFill(Color.web("#D32F2F"));
@@ -199,7 +193,6 @@ public class ReunionesView {
 
         card.getChildren().addAll(avatarConEstado, infoBox, spacer, btnChat, btnLlamar);
         
-        // Animación sutil
         card.setOnMouseEntered(e -> card.setStyle("-fx-background-color: " + colorFuerte + "10; -fx-background-radius: 8; -fx-border-color: " + colorFuerte + "; -fx-border-radius: 8;"));
         card.setOnMouseExited(e -> card.setStyle("-fx-background-color: " + colorBgBase + "; -fx-background-radius: 8; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8;"));
 
@@ -223,7 +216,6 @@ public class ReunionesView {
             card.setPadding(new Insets(20));
             card.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 12; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 2, 2);");
 
-            // Icono del Grupo
             Circle circle = new Circle(25, Color.web(colorFuerte, 0.15));
             Label icon = new Label(clase.get("nombre").substring(0,1));
             icon.setStyle("-fx-font-weight: bold; -fx-font-size: 22px; -fx-text-fill: " + colorFuerte + ";");
@@ -235,7 +227,6 @@ public class ReunionesView {
             Label lblProfesor = new Label("Titular: " + clase.get("profesor"));
             lblProfesor.setStyle("-fx-font-size: 13px; -fx-text-fill: " + colorTextMuted + ";");
             
-            // Etiqueta de Sala Permanente
             Label lblSala = new Label("Sala Permanente: Grupo " + clase.get("grupo"));
             lblSala.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: white; -fx-background-color: " + colorFuerte + "; -fx-padding: 3 8; -fx-background-radius: 10;");
             
@@ -259,7 +250,6 @@ public class ReunionesView {
         }
     }
 
-    // INTERFAZ DE LLAMADA TIPO ZOOM / MEET
     private void abrirSalaDeLlamada(String tituloReunion, String subtitulo) {
         Stage salaStage = new Stage();
         if (stagePrincipal != null) salaStage.initOwner(stagePrincipal);
@@ -268,7 +258,6 @@ public class ReunionesView {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #0f172a; -fx-border-color: " + colorFuerte + "; -fx-border-width: 2;");
 
-        // Top Bar
         HBox topBar = new HBox(15);
         topBar.setPadding(new Insets(15, 20, 15, 20));
         topBar.setAlignment(Pos.CENTER_LEFT);
@@ -286,7 +275,6 @@ public class ReunionesView {
         topBar.getChildren().addAll(lblSeguridad, spTop, btnMinimizar);
         root.setTop(topBar);
 
-        // Centro (Simulación de Video)
         VBox centroGrid = new VBox(10);
         centroGrid.setAlignment(Pos.CENTER);
         
@@ -303,7 +291,6 @@ public class ReunionesView {
         centroGrid.getChildren().addAll(videoPlaceholder, lblTitulo, lblSub);
         root.setCenter(centroGrid);
 
-        // Bottom Bar (Controles)
         HBox bottomBar = new HBox(20);
         bottomBar.setPadding(new Insets(20));
         bottomBar.setAlignment(Pos.CENTER);
@@ -312,7 +299,7 @@ public class ReunionesView {
         Button btnMic = crearBotonControlLlamada("🎤", "Silenciar", "#334155");
         Button btnCam = crearBotonControlLlamada("📷", "Detener Video", "#334155");
         Button btnPantalla = crearBotonControlLlamada("💻", "Compartir", "#334155");
-        Button btnColgar = crearBotonControlLlamada("📞", "Salir", "#ef4444"); // Rojo para salir
+        Button btnColgar = crearBotonControlLlamada("📞", "Salir", "#ef4444"); 
         btnColgar.setOnAction(e -> salaStage.close());
 
         bottomBar.getChildren().addAll(btnMic, btnCam, btnPantalla, btnColgar);

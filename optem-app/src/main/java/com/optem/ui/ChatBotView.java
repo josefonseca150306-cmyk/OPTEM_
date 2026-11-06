@@ -14,7 +14,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox; // <-- IMPORTACIÓN AGREGADA
+import javafx.scene.layout.VBox; 
 
 public class ChatBotView {
 
@@ -23,7 +23,6 @@ public class ChatBotView {
     private VBox cajaMensajes;
     private ScrollPane scrollChat;
 
-    // Recibe un Runnable para que el botón "X" pueda ocultar el widget
     public VBox getView(Runnable onClose) {
         leerPreferencias();
 
@@ -32,7 +31,6 @@ public class ChatBotView {
         widgetChat.setMaxSize(360, 520);
         widgetChat.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 16; -fx-border-color: " + colorBorder + "; -fx-border-radius: 16; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 20, 0, 5, 5);");
 
-        // --- CABECERA COMPACTA ---
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(15));
@@ -56,7 +54,6 @@ public class ChatBotView {
 
         header.getChildren().addAll(iconoIA, titulos, spacer, btnCerrar);
 
-        // --- ÁREA DE MENSAJES ---
         cajaMensajes = new VBox(12);
         cajaMensajes.setPadding(new Insets(15));
         cajaMensajes.setStyle("-fx-background-color: " + colorBgBase + ";");
@@ -66,12 +63,10 @@ public class ChatBotView {
         scrollChat.setStyle("-fx-background: " + colorBgBase + "; -fx-background-color: transparent; -fx-border-color: transparent;");
         VBox.setVgrow(scrollChat, Priority.ALWAYS);
         
-        // Auto-scroll al recibir mensaje
         cajaMensajes.heightProperty().addListener((obs, oldVal, newVal) -> scrollChat.setVvalue(1.0));
 
         agregarMensajeIA("¡Hola! Soy tu asistente virtual. Conozco tu agenda, tus tareas y el estado del sistema. ¿Qué necesitas?");
 
-        // --- BARRA DE ESCRITURA ---
         HBox inputBar = new HBox(10);
         inputBar.setPadding(new Insets(10));
         inputBar.setAlignment(Pos.CENTER);

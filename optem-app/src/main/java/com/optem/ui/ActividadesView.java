@@ -38,7 +38,6 @@ public class ActividadesView extends VBox {
     
     private VBox panelTarjetas;
     
-    // Variables Globales de Fecha para reemplazar al DatePicker
     private LocalDate fechaFormulario = LocalDate.now();
     private LocalDate fechaFiltro = LocalDate.now();
     
@@ -50,12 +49,9 @@ public class ActividadesView extends VBox {
         this.setSpacing(25);
         this.setStyle("-fx-background-color: transparent;");
 
-        // --- CABECERA ESTANDARIZADA (SIMETRÍA CON AGENDA, NOTAS Y TAREAS) ---
-        // Título limpio, sin emoji, negrita pesada y 28px
         Label lblTitulo = new Label("Gestión de Actividades Personales");
         lblTitulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
 
-        // Subtítulo a 14px
         Label lblSubtitulo = new Label("Crea, edita y filtra tus eventos.");
         lblSubtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
 
@@ -88,9 +84,6 @@ public class ActividadesView extends VBox {
         colorBorder = isDark ? "#333333" : "#e2e8f0";
     }
 
-    // ==========================================
-    // FORMULARIO IZQUIERDO (ALTA DE ACTIVIDAD)
-    // ==========================================
     private VBox crearFormularioAlta() {
         VBox panel = new VBox(20);
         panel.setPrefWidth(400); panel.setMaxWidth(400);
@@ -110,7 +103,6 @@ public class ActividadesView extends VBox {
         cmbTipo.setMaxWidth(Double.MAX_VALUE);
         cmbTipo.setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-padding: 5; -fx-background-radius: 8;");
 
-        // CALENDARIO CUSTOMIZADO (Reemplaza al DatePicker)
         Button btnFechaFormulario = new Button("📅 " + fechaFormulario.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         btnFechaFormulario.setMaxWidth(Double.MAX_VALUE);
         btnFechaFormulario.setAlignment(Pos.CENTER_LEFT);
@@ -169,9 +161,6 @@ public class ActividadesView extends VBox {
         return l;
     }
 
-    // ==========================================
-    // PANEL DERECHO (LISTA Y NAVEGACIÓN)
-    // ==========================================
     private VBox crearPanelLista() {
         VBox panel = new VBox(15);
         HBox.setHgrow(panel, Priority.ALWAYS);
@@ -185,7 +174,6 @@ public class ActividadesView extends VBox {
         
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         
-        // CONTROLES DE NAVEGACIÓN TIPO AGENDA
         Button btnAtras = new Button("◀"); 
         btnAtras.setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-cursor: hand; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6;");
         
@@ -198,7 +186,6 @@ public class ActividadesView extends VBox {
         Button btnHoy = new Button("Hoy");
         btnHoy.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold; -fx-cursor: hand; -fx-border-color: " + colorFuerte + "; -fx-border-radius: 6; -fx-padding: 5 15;");
         
-        // Lógica de Navegación
         btnAtras.setOnAction(e -> cambiarFechaFiltro(fechaFiltro.minusDays(1), btnFiltroFecha));
         btnAdelante.setOnAction(e -> cambiarFechaFiltro(fechaFiltro.plusDays(1), btnFiltroFecha));
         btnHoy.setOnAction(e -> cambiarFechaFiltro(LocalDate.now(), btnFiltroFecha));
@@ -281,7 +268,7 @@ public class ActividadesView extends VBox {
         Button btnBorrar = new Button("🗑");
         btnBorrar.setStyle("-fx-background-color: transparent; -fx-text-fill: #D32F2F; -fx-cursor: hand; -fx-font-family: 'Segoe UI Emoji';");
         btnBorrar.setOnAction(e -> {
-            e.consume(); // Evitar que se abra la ventana de edición al borrar
+            e.consume(); 
             controller.eliminarActividad(act);
             actualizarListaActividades(fechaFiltro);
             NotificacionManager.mostrarNotificacion("Eliminado", "La actividad fue borrada.", "INFO");
@@ -289,17 +276,11 @@ public class ActividadesView extends VBox {
 
         card.getChildren().addAll(icon, info, sp, lblEstado, btnBorrar);
         
-        // Clic en la tarjeta abre el menú de Edición
         card.setOnMouseClicked(e -> mostrarVentanaEdicion(act));
         
         return card;
     }
 
-    // ==========================================
-    // POPUPS FLOTANTES (CALENDARIO Y EDICIÓN)
-    // ==========================================
-    
-    // Popup del Calendario 100% Custom (Diseño Agenda)
     private void mostrarSelectorCalendarioCustom(LocalDate fechaInicial, java.util.function.Consumer<LocalDate> alSeleccionar) {
         Stage popup = new Stage();
         if (stagePrincipal != null) popup.initOwner(stagePrincipal);
@@ -309,7 +290,7 @@ public class ActividadesView extends VBox {
         root.setPadding(new Insets(20));
         root.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorFuerte + "; -fx-border-width: 2; -fx-border-radius: 12; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 40, 0, 0, 10);");
 
-        final LocalDate[] mesVisible = {fechaInicial}; // Array para poder modificarlo dentro de los botones
+        final LocalDate[] mesVisible = {fechaInicial}; 
         
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER);
@@ -369,7 +350,7 @@ public class ActividadesView extends VBox {
         btnAtras.setOnAction(e -> { mesVisible[0] = mesVisible[0].minusMonths(1); renderGrid.run(); });
         btnAdel.setOnAction(e -> { mesVisible[0] = mesVisible[0].plusMonths(1); renderGrid.run(); });
         
-        renderGrid.run(); // Primera carga
+        renderGrid.run(); 
 
         Button btnCancelar = new Button("Cancelar");
         btnCancelar.setStyle("-fx-background-color: transparent; -fx-text-fill: #D32F2F; -fx-cursor: hand;");
@@ -388,7 +369,6 @@ public class ActividadesView extends VBox {
         popup.show();
     }
 
-    // Ventana Flotante de Edición
     private void mostrarVentanaEdicion(Actividad act) {
         Stage popup = new Stage();
         if (stagePrincipal != null) popup.initOwner(stagePrincipal);

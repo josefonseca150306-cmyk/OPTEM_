@@ -50,7 +50,6 @@ public class LogrosController {
         return "Novato";
     }
     
-    // --- MOTOR DE MEDALLAS ---
     public boolean tieneMedallaPrimeraSangre() {
         return getActividadesHechasHoy() >= 1;
     }

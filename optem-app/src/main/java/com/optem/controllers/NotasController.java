@@ -35,13 +35,11 @@ public class NotasController {
     public List<String> getMateriasDisponibles() {
         List<String> nombresMaterias = new ArrayList<>();
         
-        // Agregamos las nuevas opciones solicitadas al inicio
         nombresMaterias.add("Nota personal");
         nombresMaterias.add("Recordatorio");
         
-        // Colores fijos para las notas especiales
-        mapaColores.put("Nota personal", "#90A4AE"); // Gris azulado
-        mapaColores.put("Recordatorio", "#FFB300");  // Amarillo ámbar
+        mapaColores.put("Nota personal", "#90A4AE"); 
+        mapaColores.put("Recordatorio", "#FFB300");  
         
         List< Map < String , String >> clases = MockDB.obtenerMateriasRegistradas();
         
@@ -58,7 +56,6 @@ public class NotasController {
     }
 
     public boolean guardarApunte(String titulo, String materia, String textoHtml) {
-        // Limpiamos las etiquetas HTML básicas para validar que el usuario sí escribió algo
         String textoLimpio = textoHtml.replaceAll("<[^>]*>", "").replace("&nbsp;", "").trim();
         
         if (titulo == null || titulo.trim().isEmpty() || materia == null || textoLimpio.isEmpty()) {

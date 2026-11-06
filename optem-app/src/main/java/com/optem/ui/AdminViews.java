@@ -21,14 +21,12 @@ public class AdminViews {
 
     private final AdminController controller = new AdminController();
 
-    // 1. VISTA DE ESTADÍSTICAS
     public VBox getVistaEstadisticas() {
         VBox root = crearContenedorBase("📊 Estadísticas y Tráfico de Servidores", "Monitoreo en tiempo real del uso de Optem.");
         
         Label lblSalud = new Label(controller.obtenerEstadoServidor());
         lblSalud.getStyleClass().add("label-bold-14");
 
-        // Gráfica de tráfico simulada
         NumberAxis xAxis = new NumberAxis(0, 24, 2); xAxis.setLabel("Hora del Día (24 hrs)");
         NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Usuarios Conectados");
         LineChart<Number, Number> chart = new LineChart<>(xAxis, yAxis);
@@ -36,10 +34,10 @@ public class AdminViews {
         
         XYChart.Series<Number, Number> series = new XYChart.Series<>();
         series.setName("Tráfico de Hoy");
-        series.getData().add(new XYChart.Data<>(7, 1200)); // Pico 7 AM
+        series.getData().add(new XYChart.Data<>(7, 1200)); 
         series.getData().add(new XYChart.Data<>(9, 1500));
         series.getData().add(new XYChart.Data<>(12, 800));
-        series.getData().add(new XYChart.Data<>(14, 1800)); // Pico 2 PM
+        series.getData().add(new XYChart.Data<>(14, 1800)); 
         series.getData().add(new XYChart.Data<>(20, 400));
         chart.getData().add(series);
 
@@ -53,7 +51,6 @@ public class AdminViews {
         return root;
     }
 
-    // 2. VISTA DE PERFILES (IMAGEN 1)
     public VBox getVistaPerfiles() {
         VBox root = crearContenedorBase("👤 Gestión de Perfiles", "Consulta y edición de información de contacto.");
         
@@ -83,7 +80,6 @@ public class AdminViews {
         return root;
     }
 
-    // 3. VISTA DE DOCUMENTOS Y TRAYECTORIA (IMAGEN 2 Y 3)
     public VBox getVistaDocumentos() {
         VBox root = crearContenedorBase("📁 Documentos y Trayectoria Académica", "Análisis por ciclo e indicadores de riesgo.");
         
@@ -97,13 +93,11 @@ public class AdminViews {
             panel.getChildren().clear();
             panel.getChildren().add(buscador);
             
-            // Indicadores de Riesgo (Imagen 3)
             String[] riesgo = controller.obtenerIndicadoresRiesgo(txtCuenta.getText());
             Label lblRiesgoTitle = new Label("INDICADORES DE RIESGO ACADÉMICO"); lblRiesgoTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #3D5A4D;");
             Label lblRiesgoData = new Label("Grado de avance: " + riesgo[0] + "\nPromedio general: " + riesgo[1] + "\nPromedio último periodo: " + riesgo[2] + "\nSituación actual: " + riesgo[3] + "\nBandera: " + riesgo[5]);
             lblRiesgoData.getStyleClass().add("label-bold-14");
             
-            // Documentos (Imagen 2)
             Label lblDocs = new Label("Documentos de Ingreso"); lblDocs.setStyle("-fx-font-weight: bold; -fx-text-fill: #3D5A4D;");
             VBox listDocs = new VBox(5);
             for(String doc : controller.obtenerDocumentosIngreso(txtCuenta.getText())) {
@@ -116,7 +110,6 @@ public class AdminViews {
         root.getChildren().add(panel); return root;
     }
 
-    // 4. VISTA DE CONFIGURACIÓN DEL SISTEMA
     public VBox getVistaConfiguracion() {
         VBox root = crearContenedorBase("⚙️ Configuración del Sistema", "Abre o cierra los módulos globales de Optem.");
         
@@ -133,11 +126,9 @@ public class AdminViews {
         root.getChildren().add(panel); return root;
     }
 
-    // 5. VISTA DE IA Y RECOMPENSAS
     public VBox getVistaIA() {
         VBox root = crearContenedorBase("🤖 Motor de Inteligencia Artificial", "Análisis de seriación de materias y asignación de recompensas (XP).");
         
-        // Bloque Horarios Inteligentes
         VBox boxHorarios = new VBox(10); boxHorarios.getStyleClass().add("section-panel");
         Label lblHorarios = new Label("Generador de Horarios Inteligente (Verificar Seriadas)"); lblHorarios.getStyleClass().add("label-bold-14");
         HBox busquedaHorario = new HBox(10);
@@ -149,7 +140,6 @@ public class AdminViews {
         busquedaHorario.getChildren().addAll(txtCuentaHorario, btnGenerar);
         boxHorarios.getChildren().addAll(lblHorarios, busquedaHorario, txtHorarioRes);
 
-        // Bloque Evaluador de XP
         VBox boxRecompensas = new VBox(10); boxRecompensas.getStyleClass().add("section-panel");
         Label lblXP = new Label("Evaluador de Rendimiento y Recompensas (Fin de Semestre)"); lblXP.getStyleClass().add("label-bold-14");
         Button btnEvaluar = new Button("🏆 Ejecutar Evaluación Global"); btnEvaluar.getStyleClass().add("chat-btn"); btnEvaluar.setStyle("-fx-font-size: 14px; -fx-padding: 10;");

@@ -47,7 +47,6 @@ public class AgendaMaestroView {
         layoutMain.setPadding(new Insets(30, 40, 30, 40));
         layoutMain.setStyle("-fx-background-color: transparent;");
 
-        // --- 1. CABECERA Y MINI CALENDARIO ---
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
         
@@ -60,7 +59,6 @@ public class AgendaMaestroView {
 
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // Mini Calendario (DatePicker)
         DatePicker dpCalendario = new DatePicker(fechaSeleccionada);
         dpCalendario.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-control-inner-background: " + colorBgPanel + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8;");
         dpCalendario.setOnAction(e -> {
@@ -76,13 +74,11 @@ public class AgendaMaestroView {
 
         header.getChildren().addAll(titleBox, spacer, dpCalendario, btnNuevoEvento);
 
-        // --- 2. SELECTOR DE DÍAS DE LA SEMANA ---
         selectorDias = new HBox(15);
         selectorDias.setAlignment(Pos.CENTER);
         selectorDias.setPadding(new Insets(15));
         selectorDias.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 12; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 2, 2);");
 
-        // --- 3. LÍNEA DE TIEMPO (TIMELINE) DEL DÍA ---
         timelineContainer = new VBox(0);
         timelineContainer.setPadding(new Insets(20, 0, 20, 0));
         
@@ -91,7 +87,6 @@ public class AgendaMaestroView {
         scrollTimeline.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
         VBox.setVgrow(scrollTimeline, Priority.ALWAYS);
 
-        // Inicializamos la vista por primera vez
         actualizarVistaDiasYEventos();
 
         layoutMain.getChildren().addAll(header, selectorDias, scrollTimeline);
@@ -110,21 +105,15 @@ public class AgendaMaestroView {
         colorBorder = isDark ? "#333333" : "#e2e8f0";
     }
 
-    // =======================================================
-    // LÓGICA DE ACTUALIZACIÓN DE FECHAS Y TIMELINE
-    // =======================================================
     private void actualizarVistaDiasYEventos() {
-        // 1. Actualizar el selector de 7 días (centrado en la fecha seleccionada)
         selectorDias.getChildren().clear();
         for (int i = -3; i <= 3; i++) {
             LocalDate dia = fechaSeleccionada.plusDays(i);
             selectorDias.getChildren().add(crearBotonDia(dia, dia.equals(fechaSeleccionada)));
         }
 
-        // 2. Actualizar los eventos de la línea de tiempo
         timelineContainer.getChildren().clear();
         
-        // Simulador: Si es hoy, mostramos eventos llenos. Si es otro día, mostramos genéricos o vacío.
         if (fechaSeleccionada.equals(LocalDate.now())) {
             timelineContainer.getChildren().addAll(
                 crearEventoTimeline("07:00", "Clase: Bases de Datos Avanzadas", "Grupo S5 • Aula H-104", colorFuerte, "clase"),
@@ -161,7 +150,6 @@ public class AgendaMaestroView {
 
         box.getChildren().addAll(lblDia, lblNum);
 
-        // Hacer clickeable el día para cambiar la agenda
         box.setOnMouseClicked(e -> {
             fechaSeleccionada = fecha;
             actualizarVistaDiasYEventos();
@@ -212,7 +200,6 @@ public class AgendaMaestroView {
             nodo.setFill(Color.web(colorBgPanel));
         });
 
-        // Evento Clic para abrir el Detalle
         card.setOnMouseClicked(e -> abrirDetalleEvento(titulo, descripcion, hora, tipo, colorEvento, row.getScene().getWindow()));
 
         Label lblTit = new Label(titulo);
@@ -233,9 +220,6 @@ public class AgendaMaestroView {
         return row;
     }
 
-    // =======================================================
-    // MODALES (NUEVO EVENTO Y DETALLES)
-    // =======================================================
     private void abrirModalNuevoEvento(Window owner) {
         Stage modal = new Stage();
         modal.initOwner(owner);
@@ -284,7 +268,6 @@ public class AgendaMaestroView {
         btnGuardar.setOnAction(e -> {
             NotificacionManager.mostrarNotificacion("Agenda Actualizada", "Evento '" + txtNombre.getText() + "' guardado correctamente.", "INFO");
             modal.close();
-            // Refresca la vista si el evento es para el día seleccionado
             actualizarVistaDiasYEventos(); 
         });
 
@@ -332,7 +315,6 @@ public class AgendaMaestroView {
         HBox botones = new HBox(15);
         botones.setAlignment(Pos.CENTER_RIGHT);
         
-        // CONEXIÓN CON LOGROS / XP
         Button btnCompletar = new Button("✔ Marcar como Completado");
         btnCompletar.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;");
         btnCompletar.setOnAction(e -> {
@@ -346,7 +328,6 @@ public class AgendaMaestroView {
             btnCompletar.setOnAction(e -> {
                 NotificacionManager.mostrarNotificacion("Gestor de Tareas", "Redirigiendo al panel de calificación...", "INFO");
                 modal.close();
-                // Aquí en el futuro llamaremos a TareasMaestroView
             });
         }
 

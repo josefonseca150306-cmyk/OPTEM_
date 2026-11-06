@@ -1,12 +1,13 @@
 package com.optem.controllers;
 
-import com.optem.ui.DashboardView;
 import java.util.prefs.Preferences;
+
+import com.optem.ui.DashboardView;
+
 import javafx.application.Platform;
 
 public class SplashController {
 
-    // Estructura (DTO) para transportar los colores del tema
     public static class SplashTheme {
         public String bgRoot;
         public String textTitle;
@@ -21,9 +22,6 @@ public class SplashController {
         }
     }
 
-    /**
-     * Consulta las preferencias del último usuario para determinar los colores del Splash.
-     */
     public SplashTheme getTheme() {
         Preferences prefs = Preferences.userNodeForPackage(DashboardView.class);
         String lastActive = prefs.get("LAST_ACTIVE_ACCOUNT", "");
@@ -37,9 +35,6 @@ public class SplashController {
         return new SplashTheme(bgRoot, textTitle, textSlogan, textStatus);
     }
 
-    /**
-     * Simula el tiempo de carga en un hilo en segundo plano y ejecuta una acción al terminar.
-     */
     public void simulateLoading(Runnable onSuccess) {
         Thread loadingThread = new Thread(() -> {
             try {

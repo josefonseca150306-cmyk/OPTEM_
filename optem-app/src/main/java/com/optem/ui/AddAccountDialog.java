@@ -27,10 +27,8 @@ public class AddAccountDialog {
 
     private UserData result = null;
     
-    // Instancia de nuestro nuevo controlador
     private final AddAccountController controller = new AddAccountController();
 
-    // DTO (Objeto de Transferencia de Datos)
     public static class UserData {
         public String user;
         public String pass;
@@ -55,7 +53,6 @@ public class AddAccountDialog {
         root.setPadding(new Insets(25));
         root.setAlignment(Pos.CENTER);
         
-        // DISEÑO CRISTAL UNIFICADO
         root.setStyle("-fx-background-color: rgba(255, 255, 255, 0.95); " +
                       "-fx-background-radius: 20; " +
                       "-fx-border-color: rgba(0,0,0,0.06); " +
@@ -64,7 +61,6 @@ public class AddAccountDialog {
         
         root.setEffect(new DropShadow(15, Color.rgb(0, 0, 0, 0.1)));
 
-        // CABECERA PERSONALIZADA CON BOTÓN DE CERRAR
         Label lblTitle = new Label("Vincular Cuenta");
         lblTitle.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #3D5A4D; -fx-font-family: 'Segoe UI';");
         
@@ -76,7 +72,6 @@ public class AddAccountDialog {
         HBox.setHgrow(header.getChildren().get(1), Priority.ALWAYS);
         header.setAlignment(Pos.CENTER);
 
-        // --- CAMPOS DE IDENTIFICACIÓN ---
         TextField txtNombre = new TextField();
         txtNombre.setPromptText("Nombre(s)");
         txtNombre.setStyle("-fx-background-color: #ffffff; -fx-border-color: #cbd5e1; -fx-border-width: 1; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10; -fx-font-family: 'Segoe UI';");
@@ -85,7 +80,6 @@ public class AddAccountDialog {
         txtApellido.setPromptText("Apellidos (Opcional)");
         txtApellido.setStyle(txtNombre.getStyle());
 
-        // --- CAMPO DE CORREO ---
         TextField txtUser = new TextField();
         txtUser.setPromptText("Correo institucional");
         txtUser.setStyle(txtNombre.getStyle());
@@ -110,7 +104,6 @@ public class AddAccountDialog {
         optAlumno.setOnAction(e -> { txtUser.setText(txtUser.getText() + "alumno.uaemex.mx"); Platform.runLater(txtUser::end); });
         optUaemex.setOnAction(e -> { txtUser.setText(txtUser.getText() + "uaemex.mx"); Platform.runLater(txtUser::end); });
 
-        // --- CAMPO CONTRASEÑA ---
         StackPane passContainer = new StackPane();
         PasswordField txtPassHidden = new PasswordField();
         txtPassHidden.setPromptText("Número de cuenta");
@@ -141,7 +134,6 @@ public class AddAccountDialog {
         lblError.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12; -fx-font-weight: bold; -fx-font-family: 'Segoe UI';");
         lblError.setVisible(false);
 
-        // --- BOTÓN VINCULAR ---
         Button btnAceptar = new Button("Vincular");
         btnAceptar.setMaxWidth(Double.MAX_VALUE);
         btnAceptar.setStyle("-fx-background-color: #3D5A4D; -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 10; -fx-font-weight: bold; -fx-font-size: 14; -fx-cursor: hand;");
@@ -152,10 +144,8 @@ public class AddAccountDialog {
             String nombre = txtNombre.getText().trim();
             String apellido = txtApellido.getText().trim();
 
-            // Delegamos la validación al controlador
             result = controller.procesarVinculacion(usuario, password, nombre, apellido, lblError);
             
-            // Si el controlador nos devolvió los datos es porque todo está correcto
             if (result != null) {
                 dialog.close();
             }
@@ -166,7 +156,6 @@ public class AddAccountDialog {
         Scene scene = new Scene(root, 360, 380);
         scene.setFill(Color.TRANSPARENT); 
         
-        // INYECCIÓN CSS PARA EL MENÚ DORADO
         scene.getStylesheets().add("data:text/css," +
             ".menu-dominio-oro { -fx-background-color: rgba(255, 255, 255, 0.98); -fx-background-radius: 8; -fx-border-color: #ddd; -fx-border-radius: 8; }" +
             ".menu-dominio-oro .menu-item { -fx-padding: 8 15 8 12; -fx-cursor: hand; }" +

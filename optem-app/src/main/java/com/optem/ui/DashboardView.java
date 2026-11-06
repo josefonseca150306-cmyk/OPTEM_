@@ -75,7 +75,6 @@ public class DashboardView {
     private String correoActualGlobal;
     private Button btnToggle; 
 
-    // Agregamos el botón de reinscripción admin a la declaración
     private Button btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnActividades, btnGrupos, btnPomodoro, btnLogros, btnReinscripcion, btnAjustes;
     private Button btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdReinscripcion, btnAdConfig;
 
@@ -192,9 +191,6 @@ public class DashboardView {
         Runnable themeUpdater = () -> show(stage, correoUsuario, fileKey); 
         String rol = controller.getRolUsuario(); 
 
-        // =======================================================
-        // ENRUTAMIENTO DEL ADMINISTRADOR ACTUALIZADO
-        // =======================================================
         if (rol.equals("ADMINISTRADOR")) {
             btnAdStats = createMenuButton("📊", "Estadísticas"); 
             btnAdStats.setOnAction(e -> { root.setCenter(new AdminEstadisticasView().getView()); actualizarSeleccionMenu(btnAdStats); });
@@ -208,7 +204,6 @@ public class DashboardView {
             btnAdIA = createMenuButton("🤖", "Inteligencia Artificial"); 
             btnAdIA.setOnAction(e -> { root.setCenter(new AdminIAView().getView()); actualizarSeleccionMenu(btnAdIA); });
 
-            // NUEVA VISTA DE REINSCRIPCION PARA ADMIN
             btnAdReinscripcion = createMenuButton("📑", "Reinscripción"); 
             btnAdReinscripcion.setOnAction(e -> { root.setCenter(new AdminReinscripcionView().getView()); actualizarSeleccionMenu(btnAdReinscripcion); });
             
@@ -218,9 +213,6 @@ public class DashboardView {
             menuButtonsBox.getChildren().addAll(btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdReinscripcion, btnAdConfig);
             btnAdStats.fire();
         } 
-        // =======================================================
-        // ENRUTAMIENTO DEL MAESTRO
-        // =======================================================
         else if (rol.equals("MAESTRO")) {
             btnInicio = createMenuButton("🏠", "Inicio"); btnInicio.setOnAction(e -> { root.setCenter(new InicioMaestroView().getView()); actualizarSeleccionMenu(btnInicio); });
             btnAgenda = createMenuButton("📅", "Mi Agenda"); btnAgenda.setOnAction(e -> { try { root.setCenter(new AgendaMaestroView().getView()); actualizarSeleccionMenu(btnAgenda); } catch(Exception ex) {} });
@@ -235,9 +227,6 @@ public class DashboardView {
             menuButtonsBox.getChildren().addAll(btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnGrupos, btnPomodoro, btnLogros, btnAjustes);
             btnInicio.fire();
         } 
-        // =======================================================
-        // ENRUTAMIENTO DEL ESTUDIANTE
-        // =======================================================
         else { 
             construirInicioEstudiante(animacionesActivas, colorFuerte, stage);
             

@@ -39,7 +39,6 @@ public class LogrosView extends VBox {
         contenido.setPadding(new Insets(30, 40, 40, 40));
         contenido.setStyle("-fx-background-color: transparent;");
 
-        // --- 1. CABECERA ESTANDARIZADA (SIMETRÍA CON AGENDA Y NOTAS) ---
         VBox header = new VBox(5);
         Label titulo = new Label("Sistema de Logros y Niveles");
         titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
@@ -49,7 +48,6 @@ public class LogrosView extends VBox {
         
         header.getChildren().addAll(titulo, subtitulo);
 
-        // --- 2. MEDALLAS DESBLOQUEADAS ---
         HBox panelMedallas = new HBox(15);
         panelMedallas.setAlignment(Pos.CENTER_LEFT);
         
@@ -59,7 +57,6 @@ public class LogrosView extends VBox {
             crearMedalla("🛡", "Sobreviviente", "Sobrevive a 5 tareas pendientes", controller.tieneMedallaSobreviviente())
         );
 
-        // --- 3. ESTADÍSTICAS PRINCIPALES ---
         HBox statsBox = new HBox(30);
         statsBox.setAlignment(Pos.CENTER);
         
@@ -76,7 +73,6 @@ public class LogrosView extends VBox {
         HBox.setHgrow(boxRacha, Priority.ALWAYS);
         statsBox.getChildren().addAll(boxXP, boxRacha);
 
-        // --- 4. MAPA DE NIVELES ---
         VBox mapaNiveles = new VBox(15);
         mapaNiveles.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 15; -fx-padding: 30; -fx-border-color: " + colorBorder + "; -fx-border-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 4);");
         
@@ -91,7 +87,6 @@ public class LogrosView extends VBox {
             crearFilaNivel("👑", "Experto", "600+ XP", nivelActual.equals("Experto"), xpActual >= 600)
         );
 
-        // --- 5. BANNER DE MOTIVACIÓN ---
         HBox banner = new HBox(30);
         banner.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 15; -fx-border-color: " + colorBorder + "; -fx-border-radius: 15; -fx-padding: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 4);");
         banner.setAlignment(Pos.CENTER_LEFT);

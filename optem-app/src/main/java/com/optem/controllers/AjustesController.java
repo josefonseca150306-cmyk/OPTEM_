@@ -50,9 +50,6 @@ public class AjustesController {
         return newState;
     }
 
-    // --- LECTOR DE PANTALLA ELIMINADO ---
-
-    // --- MOTOR DE RATÓN FÍSICO POR TECLADO ---
     public void moverCursorMouse(int dx, int dy) {
         try {
             Robot robot = new Robot();

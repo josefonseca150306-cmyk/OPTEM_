@@ -267,10 +267,6 @@ public class LoginView {
                     if (lastChar.matches("\\d")) { 
                         cuentaReal[index] = lastChar;
                         Platform.runLater(() -> tf.setText(ocultarCuenta ? "•" : lastChar));
-
-                        // ========================================================
-                        // MAGIA CORREGIDA: AUTO-LOGIN PARA ADMINISTRADOR 
-                        // ========================================================
                         StringBuilder pwd = new StringBuilder();
                         for (String c : cuentaReal) pwd.append(c);
                         
@@ -278,8 +274,6 @@ public class LoginView {
                             Platform.runLater(() -> {
                                 if (animacionesActivas) physicsEngine.stop();
                                 controller.handleLogin(txtNombre.getText(), txtApellido.getText(), txtCorreo.getText(), pwd.toString(), "ADMINISTRADOR", lblError, stage);
-                                
-                                // Si falló el login y mostró el error, reanudamos la animación
                                 if (lblError.isVisible() && animacionesActivas) {
                                     physicsEngine.start();
                                 }
@@ -343,9 +337,6 @@ public class LoginView {
         Button btnDocente = createAccountTypeButton("🏛", "Docente", colorFuerte, colorClaro);
         buttonsBox.getChildren().addAll(btnEstudiante, btnDocente);
 
-        // ========================================================
-        // LOS BOTONES CORREGIDOS (Reactivan animaciones en error)
-        // ========================================================
         btnEstudiante.setOnAction(e -> {
             if (animacionesActivas) physicsEngine.stop(); 
             StringBuilder passwordBuilder = new StringBuilder();
@@ -437,7 +428,6 @@ public class LoginView {
             pane.getChildren().remove(bubble);
             for (int i = 0; i < (int)(Math.random() * 3) + 6; i++) {
                 Circle mini = new Circle(bubble.getRadius() / 4); 
-                // AQUÍ EVITAMOS QUE SE VEAN NEGRAS AL INICIO
                 mini.setFill(Color.TRANSPARENT);
                 mini.setStroke(Color.TRANSPARENT);
                 

@@ -54,7 +54,6 @@ public class AjustesView {
         layoutMain.setPadding(new Insets(30, 40, 30, 40));
         layoutMain.setStyle("-fx-background-color: transparent;");
 
-        // --- CABECERA ---
         VBox titleBox = new VBox(5);
         Label titulo = new Label("⚙ Ajustes y Personalización");
         titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
@@ -62,7 +61,6 @@ public class AjustesView {
         subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
         titleBox.getChildren().addAll(titulo, subtitulo);
 
-        // --- SECCIÓN 1: PERFIL (DINÁMICO POR ROL) ---
         VBox secPerfil = crearContenedorSeccion();
         String rol = dashController.getRolUsuario();
         Map<String, String> perfilData = dashController.getPerfilUsuario();
@@ -134,7 +132,6 @@ public class AjustesView {
         perfilContent.getChildren().addAll(colFoto, formPerfil);
         secPerfil.getChildren().addAll(lblPerfilTit, perfilContent);
 
-        // --- SECCIÓN 2: APARIENCIA ---
         VBox secApariencia = crearContenedorSeccion();
         Label lblAparTit = new Label("🎨 Apariencia y Tema");
         lblAparTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-font-size: 14px;");
@@ -189,12 +186,10 @@ public class AjustesView {
 
         secApariencia.getChildren().addAll(lblAparTit, rowDark, rowColor, rowFont, rowSave);
 
-        // --- SECCIÓN 3: ACCESIBILIDAD Y NOTIFICACIONES (MEJORADA) ---
         VBox secAcc = crearContenedorSeccion();
         Label lblAccTit = new Label("🔔 Notificaciones y Accesibilidad");
         lblAccTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-font-size: 14px;");
 
-        // Notificaciones (Diseño Limpio)
         VBox boxNoti = new VBox(5);
         boxNoti.setPadding(new Insets(10, 0, 10, 0));
         ToggleGroup tgNoti = new ToggleGroup();
@@ -204,7 +199,6 @@ public class AjustesView {
         rbFull.setSelected(true); 
         boxNoti.getChildren().addAll(rbOff, rbPrio, rbFull);
 
-        // Accesibilidad (Diseño Limpio)
         VBox boxAccs = new VBox(5);
         boxAccs.setPadding(new Insets(10, 0, 0, 0));
         
@@ -224,7 +218,6 @@ public class AjustesView {
 
         secAcc.getChildren().addAll(lblAccTit, boxNoti, boxAccs);
 
-        // Agregar todo al scroll
         layoutMain.getChildren().addAll(titleBox, secPerfil, secApariencia, secAcc);
         
         ScrollPane scroll = new ScrollPane(layoutMain);
@@ -271,7 +264,6 @@ public class AjustesView {
         return tf;
     }
 
-    // FIX: Nuevo método de RadioButton a prueba de Modo Oscuro con estilo interactivo
     private RadioButton crearRadio(String texto, ToggleGroup grupo) {
         RadioButton rb = new RadioButton(texto);
         rb.setToggleGroup(grupo);
@@ -279,14 +271,12 @@ public class AjustesView {
         rb.setPadding(new Insets(8));
         rb.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMain + "; -fx-cursor: hand; -fx-background-radius: 8;");
         
-        // Hover Dinámico
         rb.setOnMouseEntered(e -> rb.setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-cursor: hand; -fx-background-radius: 8;"));
         rb.setOnMouseExited(e -> rb.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMain + "; -fx-cursor: hand; -fx-background-radius: 8;"));
         
         return rb;
     }
 
-    // FIX: Nuevo método de CheckBox a prueba de Modo Oscuro con estilo interactivo
     private CheckBox crearCheckBox(String texto, boolean seleccionado) {
         CheckBox chk = new CheckBox(texto);
         chk.setSelected(seleccionado);
@@ -294,7 +284,6 @@ public class AjustesView {
         chk.setPadding(new Insets(8));
         chk.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMain + "; -fx-cursor: hand; -fx-background-radius: 8;");
         
-        // Hover Dinámico
         chk.setOnMouseEntered(e -> chk.setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-cursor: hand; -fx-background-radius: 8;"));
         chk.setOnMouseExited(e -> chk.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMain + "; -fx-cursor: hand; -fx-background-radius: 8;"));
         

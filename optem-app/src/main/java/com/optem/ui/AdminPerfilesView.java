@@ -30,7 +30,6 @@ public class AdminPerfilesView {
         layoutMain.setPadding(new Insets(30, 40, 30, 40));
         layoutMain.setStyle("-fx-background-color: transparent;");
 
-        // Cabecera
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
         VBox titleBox = new VBox(5);
@@ -45,7 +44,6 @@ public class AdminPerfilesView {
         btnNuevo.setOnAction(e -> NotificacionManager.mostrarNotificacion("Módulo Perfiles", "Abriendo formulario de creación de usuario...", "INFO"));
         header.getChildren().addAll(titleBox, spacer, btnNuevo);
 
-        // Barra de Búsqueda y Filtros
         HBox filtrosBox = new HBox(15);
         filtrosBox.setAlignment(Pos.CENTER_LEFT);
         TextField txtBuscar = new TextField();
@@ -60,7 +58,6 @@ public class AdminPerfilesView {
         
         filtrosBox.getChildren().addAll(txtBuscar, cbRol);
 
-        // Lista de Usuarios
         VBox listaUsuarios = new VBox(10);
         listaUsuarios.getChildren().addAll(
             crearTarjetaUsuario("Jose Antonio Fonseca", "jfonsecal001@alumno.uaemex.mx", "Estudiante", "Activo"),

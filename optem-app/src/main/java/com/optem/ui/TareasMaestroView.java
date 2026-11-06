@@ -43,7 +43,6 @@ public class TareasMaestroView {
         layoutMain.setPadding(new Insets(30, 40, 30, 40));
         layoutMain.setStyle("-fx-background-color: transparent;");
 
-        // --- 1. CABECERA ---
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
         
@@ -62,7 +61,6 @@ public class TareasMaestroView {
 
         header.getChildren().addAll(titleBox, spacer, btnNuevaTarea);
 
-        // --- 2. FILTROS ---
         HBox filtrosBox = new HBox(15);
         filtrosBox.setAlignment(Pos.CENTER_LEFT);
         
@@ -73,15 +71,12 @@ public class TareasMaestroView {
         btnCerradas.setOnAction(e -> cargarTareasCerradas());
         
         filtrosBox.getChildren().addAll(btnActivas, btnCerradas);
-
-        // --- 3. CONTENEDOR DE TAREAS ---
         contenedorTareas = new VBox(15);
         ScrollPane scroll = new ScrollPane(contenedorTareas);
         scroll.setFitToWidth(true);
         scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
-        // Cargamos la vista por defecto
         cargarTareasActivas();
 
         layoutMain.getChildren().addAll(header, filtrosBox, scroll);
@@ -166,9 +161,6 @@ public class TareasMaestroView {
         return card;
     }
 
-    // =======================================================
-    // MODAL: CREAR ASIGNACIÓN CON FIX MODO OSCURO
-    // =======================================================
     private void abrirModalCrearTarea(Window owner) {
         Stage modal = new Stage();
         modal.initOwner(owner);
@@ -196,13 +188,11 @@ public class TareasMaestroView {
         TextArea txtDesc = new TextArea();
         txtDesc.setPromptText("Instrucciones para los alumnos...");
         txtDesc.setPrefRowCount(3);
-        // FIX: Se fuerza el control interno para sobreescribir el blanco por defecto
         txtDesc.setStyle("-fx-control-inner-background: " + colorBgBase + "; -fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6;");
 
         HBox fechaCaja = new HBox(15);
         DatePicker dpFecha = new DatePicker();
         dpFecha.setPromptText("Fecha Límite");
-        // FIX: Forzamos el control interno del calendario y el editor de texto
         dpFecha.setStyle("-fx-control-inner-background: " + colorBgBase + "; -fx-background-color: " + colorBgBase + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6;");
         dpFecha.getEditor().setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + ";");
         
@@ -223,7 +213,7 @@ public class TareasMaestroView {
         btnGuardar.setOnAction(e -> {
             NotificacionManager.mostrarNotificacion("Tarea Asignada", "La tarea '" + txtNombre.getText() + "' se asignó al grupo. Su cierre se registró automáticamente en tu Agenda.", "INFO");
             modal.close();
-            cargarTareasActivas(); // Refresca la vista
+            cargarTareasActivas(); 
         });
 
         botones.getChildren().addAll(btnCancelar, btnGuardar);
@@ -237,9 +227,6 @@ public class TareasMaestroView {
         modal.setY(owner.getY() + (owner.getHeight() - modal.getHeight()) / 2);
     }
 
-    // =======================================================
-    // MODAL: REVISAR ENTREGAS (CALIFICAR)
-    // =======================================================
     private void abrirModalCalificar(String tarea, String materia, Window owner, boolean modoCerrado) {
         Stage modal = new Stage();
         modal.initOwner(owner);

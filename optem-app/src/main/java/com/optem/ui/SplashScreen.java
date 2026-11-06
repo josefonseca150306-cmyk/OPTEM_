@@ -23,13 +23,10 @@ public class SplashScreen {
 
     public void show(Stage primaryStage) {
         
-        // 1. CREAMOS EL SPLASH TEMPORAL (Como una capa superior)
         Stage splashStage = new Stage();
-        // Lo hacemos "Transparente" para poder desvanecerlo y ver qué hay detrás
         splashStage.initStyle(StageStyle.TRANSPARENT); 
         
         StackPane root = new StackPane();
-        // Fondo institucional de la universidad
         root.setStyle("-fx-background-color: radial-gradient(center 50% 50%, radius 70%, #1a2e23, #050505);");
 
         VBox content = new VBox(25);
@@ -58,11 +55,9 @@ public class SplashScreen {
         root.getChildren().add(content);
 
         Scene scene = new Scene(root);
-        // Fundamental para que al quitarle el color, la ventana sea invisible
         scene.setFill(Color.TRANSPARENT); 
         splashStage.setScene(scene);
         
-        // Hacemos que la capa del Splash cubra exactamente tu pantalla respetando tu barra de tareas
         Screen screen = Screen.getPrimary();
         Rectangle2D bounds = screen.getVisualBounds();
         splashStage.setX(bounds.getMinX());
@@ -70,12 +65,8 @@ public class SplashScreen {
         splashStage.setWidth(bounds.getWidth());
         splashStage.setHeight(bounds.getHeight());
         
-        // Mostramos el Splash inmediatamente
         splashStage.show();
 
-        // ==========================================
-        // MOTOR DE ANIMACIÓN
-        // ==========================================
         FadeTransition fadeInLogo = new FadeTransition(Duration.seconds(1.5), ivLogo);
         fadeInLogo.setFromValue(0);
         fadeInLogo.setToValue(1);
@@ -96,8 +87,6 @@ public class SplashScreen {
 
         PauseTransition pause = new PauseTransition(Duration.seconds(1.2));
 
-        // Magia de Revelado: Desvanecemos lentamente la capa negra (root), 
-        // lo que revelará automáticamente a la ventana que esté detrás.
         FadeTransition fadeOutAll = new FadeTransition(Duration.seconds(1.5), root);
         fadeOutAll.setFromValue(1);
         fadeOutAll.setToValue(0);
@@ -112,24 +101,15 @@ public class SplashScreen {
         );
 
         secuencia.setOnFinished(e -> {
-            // Cuando la animación termina y ya todo es transparente, simplemente 
-            // destruimos la ventana temporal. El Login ya quedó enfrente.
             splashStage.close();
         });
 
-        // 2. EL TRUCO MAESTRO: Cargar el Login ATRÁS en silencio
         Platform.runLater(() -> {
-            // El sistema decide si carga el Login o se salta directo al Dashboard
             new LoginView().show(primaryStage);
-            
-            // ESTA ES LA LÍNEA MÁGICA: Obliga al Splash a quedarse por encima de TODO, 
-            // sin importar si el Dashboard se maximiza o intenta taparlo.
             splashStage.setAlwaysOnTop(true);
             
-            // Aseguramos que el Splash siga al frente bloqueando la vista
             splashStage.toFront();
             
-            // Ahora sí, arrancamos la película
             secuencia.play();
         });
     }

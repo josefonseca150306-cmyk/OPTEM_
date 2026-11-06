@@ -39,7 +39,6 @@ public class GruposMaestroView extends VBox {
         this.setSpacing(25);
         this.setStyle("-fx-background-color: transparent;");
 
-        // --- 1. CABECERA ---
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
         
@@ -58,17 +57,14 @@ public class GruposMaestroView extends VBox {
 
         header.getChildren().addAll(titleBox, spacer, btnNuevoGrupo);
 
-        // --- 2. MÉTRICAS RÁPIDAS ---
         HBox metricasHeader = new HBox(20);
         metricasHeader.getChildren().addAll(
             crearMetricaRapida("Total de Grupos Activos", "2"),
             crearMetricaRapida("Alumnos Totales", "42")
         );
 
-        // --- 3. LISTA DE GRUPOS ACTIVOS ---
         listaGrupos = new VBox(15);
         
-        // Mocks de ejemplo
         agregarTarjetaGrupo("Ingeniería de Software", "Lun/Mié 13:00 - 15:00", controller.generarCodigoClase(), 24, 8.5);
         agregarTarjetaGrupo("Bases de Datos Avanzadas", "Mar/Jue 07:00 - 09:00", controller.generarCodigoClase(), 18, 7.2);
 
@@ -139,7 +135,6 @@ public class GruposMaestroView extends VBox {
 
         topFila.getChildren().addAll(info, sp1, boxPromedio);
 
-        // --- FILA INFERIOR ---
         HBox actionBox = new HBox(15);
         actionBox.setAlignment(Pos.CENTER_LEFT);
         actionBox.setStyle("-fx-padding: 15 0 0 0; -fx-border-color: " + colorBorder + "; -fx-border-width: 1 0 0 0;");
@@ -155,13 +150,9 @@ public class GruposMaestroView extends VBox {
 
         Region sp2 = new Region(); HBox.setHgrow(sp2, Priority.ALWAYS);
 
-        // Botón de Opciones
         Button btnOpciones = new Button("Opciones ⚙");
         btnOpciones.setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6; -fx-padding: 6 15; -fx-cursor: hand;");
         
-        // ========================================================
-        // FIX: MENU FLOTANTE PERSONALIZADO (A PRUEBA DE FALLOS CSS)
-        // ========================================================
         Popup popup = new Popup();
         popup.setAutoHide(true);
         
@@ -193,7 +184,6 @@ public class GruposMaestroView extends VBox {
         btnOpciones.setOnAction(e -> {
             Bounds bounds = btnOpciones.localToScreen(btnOpciones.getBoundsInLocal());
             if (bounds != null) {
-                // Muestra el menú justo debajo del botón
                 popup.show(btnOpciones, bounds.getMinX(), bounds.getMaxY() + 5);
             }
         });
@@ -204,7 +194,6 @@ public class GruposMaestroView extends VBox {
         listaGrupos.getChildren().add(card);
     }
 
-    // Método para crear botones del menú desplegable que respetan el modo oscuro
     private Button crearBotonOpcion(String texto) {
         Button btn = new Button(texto);
         btn.setPrefWidth(220);

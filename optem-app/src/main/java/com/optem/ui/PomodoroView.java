@@ -65,9 +65,6 @@ public class PomodoroView extends BorderPane {
         this.setPadding(new Insets(30, 40, 40, 40));
         this.setStyle("-fx-background-color: transparent;");
 
-        // ==========================================
-        // 1. TOP BAR: MENÚ DE MODOS 
-        // ==========================================
         HBox topBar = new HBox();
         topBar.setAlignment(Pos.CENTER_LEFT);
         
@@ -81,9 +78,6 @@ public class PomodoroView extends BorderPane {
         topBar.getChildren().add(panelModos);
         this.setTop(topBar);
 
-        // ==========================================
-        // 2. CENTRO: TARJETA PREMIUM
-        // ==========================================
         VBox cardCentral = new VBox(25);
         cardCentral.setAlignment(Pos.CENTER);
         cardCentral.setPadding(new Insets(35, 50, 35, 50));
@@ -91,7 +85,6 @@ public class PomodoroView extends BorderPane {
         cardCentral.setMaxHeight(650);
         cardCentral.setStyle("-fx-background-color: -color-bg-panel; -fx-background-radius: 20; -fx-border-color: -color-border; -fx-border-radius: 20; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 20, 0, 0, 5);");
 
-        // --- CABECERA ---
         VBox header = new VBox(8); header.setAlignment(Pos.CENTER);
         Label lblTitulo = new Label("Temporizador de Estudio");
         lblTitulo.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main;"); 
@@ -102,7 +95,6 @@ public class PomodoroView extends BorderPane {
         lblSub.getStyleClass().add("lbl-text-normal");
         header.getChildren().addAll(lblTitulo, lblSub);
 
-        // --- SELECTOR DE TAREAS Y BOTÓN DE DETALLES ---
         HBox panelSelector = new HBox(15);
         panelSelector.setAlignment(Pos.CENTER);
 
@@ -153,7 +145,6 @@ public class PomodoroView extends BorderPane {
             }
         });
 
-        // CONEXIÓN CORREGIDA: Ahora abre el Popup directo desde el Pomodoro
         btnVerDetalles.setOnAction(e -> {
             Actividad act = cmbTareas.getValue();
             if (act != null) {
@@ -163,13 +154,10 @@ public class PomodoroView extends BorderPane {
 
         panelSelector.getChildren().addAll(cmbTareas, btnVerDetalles);
 
-        // --- RELOJ RADIAL ANIMADO ---
         StackPane relojUI = crearRelojRadial();
 
-        // --- PALETA DE COLORES DEL RELOJ ---
         HBox panelColores = crearPaletaColoresReloj();
 
-        // --- CONTROLES PRINCIPALES ---
         HBox panelControles = new HBox(20); panelControles.setAlignment(Pos.CENTER);
         
         btnMainAction = new Button("▶ Iniciar");
@@ -185,9 +173,6 @@ public class PomodoroView extends BorderPane {
         cardCentral.getChildren().addAll(header, panelSelector, relojUI, panelColores, panelControles);
         this.setCenter(cardCentral);
 
-        // ==========================================
-        // 3. EVENTOS Y ANIMACIÓN
-        // ==========================================
         btnModoEnfoque.setOnAction(e -> seleccionarModo(true));
         btnModoDescanso.setOnAction(e -> seleccionarModo(false));
         
@@ -264,9 +249,6 @@ public class PomodoroView extends BorderPane {
         actualizarTextoReloj();
     }
 
-    // ==========================================
-    // DISEÑO RADIAL Y COLORES 
-    // ==========================================
     private StackPane crearRelojRadial() {
         StackPane root = new StackPane();
         grupoSegmentos = new Group();
@@ -366,9 +348,6 @@ public class PomodoroView extends BorderPane {
         lblReloj.setText(controller.getTiempoFormateado());
     }
 
-    // ====================================================================
-    // VENTANA DE DETALLES (RÉPLICA DE TEAMS) EN MODO LECTURA PARA POMODORO
-    // ====================================================================
     private void mostrarDetallesTarea(Actividad tarea) {
         Stage popup = new Stage();
         Window owner = this.getScene().getWindow();
@@ -396,7 +375,6 @@ public class PomodoroView extends BorderPane {
         HBox body = new HBox(40);
         body.setPadding(new Insets(30, 40, 40, 40));
 
-        // COLUMNA IZQUIERDA
         VBox colIzq = new VBox(25);
         colIzq.setPrefWidth(450);
         
@@ -423,7 +401,6 @@ public class PomodoroView extends BorderPane {
         miTrabajoBox.getChildren().addAll(lblMiTrabajo, archivoBox);
         colIzq.getChildren().addAll(infoTitulo, miTrabajoBox);
 
-        // COLUMNA DERECHA
         VBox colDer = new VBox(20);
         colDer.setPrefWidth(400);
 

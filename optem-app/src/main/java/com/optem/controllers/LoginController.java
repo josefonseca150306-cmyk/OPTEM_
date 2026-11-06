@@ -31,14 +31,12 @@ public class LoginController {
 
     public void handleLogin(String nombre, String apellido, String correo, String password, String rol, Label lblError, Stage stage) {
         
-        // 1. Validamos que el correo siempre esté lleno
         if (correo.isEmpty()) { 
             lblError.setText("Por favor ingresa tu correo institucional."); 
             lblError.setVisible(true); 
             return; 
         }
 
-        // 2. EXCEPCIÓN PARA ADMIN: Si NO es administrador, entonces SÍ es obligatorio el nombre
         if (!rol.equals("ADMINISTRADOR") && nombre.isEmpty()) { 
             lblError.setText("Por favor ingresa tu nombre."); 
             lblError.setVisible(true); 
@@ -59,9 +57,6 @@ public class LoginController {
             }
         }
 
-        // ========================================================
-        // CAPA DE SEGURIDAD: CONSULTAMOS LA BASE DE DATOS (MOCK)
-        // ========================================================
         boolean accesoConcedido = MockDB.autenticar(correo, password, rol);
 
         if (accesoConcedido) {
@@ -69,7 +64,6 @@ public class LoginController {
 
             Preferences prefs = Preferences.userNodeForPackage(DashboardView.class);
             
-            // Si es Admin y no puso nombre, guardamos "Administrador", si no, guardamos su nombre real
             String nombreFinal = nombre.isEmpty() ? "Administrador Principal" : nombre;
             String nombreCompleto = nombreFinal + (apellido.isEmpty() ? "" : " " + apellido.trim());
             

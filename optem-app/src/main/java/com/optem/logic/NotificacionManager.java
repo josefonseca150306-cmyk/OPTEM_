@@ -23,7 +23,6 @@ public class NotificacionManager {
 
     public static void mostrarNotificacion(String titulo, String mensaje, String tipo) {
         Platform.runLater(() -> {
-            // 1. Validar preferencias de usuario
             Preferences prefs = Preferences.userNodeForPackage(DashboardView.class);
             String correoActual = prefs.get("LAST_ACTIVE_ACCOUNT", "");
             String nivel = prefs.get("PREF_NOTIFICATIONS_" + correoActual, "COMPLETO");
@@ -31,10 +30,8 @@ public class NotificacionManager {
             if (nivel.equals("APAGADO")) return;
             if (nivel.equals("PRIORITARIO") && !tipo.equals("URGENTE") && !tipo.equals("REUNION")) return;
 
-            // 2. Producir sonido del sistema
             Toolkit.getDefaultToolkit().beep();
 
-            // 3. Crear la ventana flotante (Toast)
             Stage toastStage = new Stage();
             toastStage.initStyle(StageStyle.TRANSPARENT);
             toastStage.setAlwaysOnTop(true);
@@ -55,13 +52,11 @@ public class NotificacionManager {
             scene.setFill(Color.TRANSPARENT);
             toastStage.setScene(scene);
 
-            // 4. Posicionar abajo a la derecha
             Screen screen = Screen.getPrimary();
             Rectangle2D bounds = screen.getVisualBounds();
             toastStage.show();
             toastStage.setX(bounds.getMaxX() - toastStage.getWidth() - 20);
             
-            // Animación de entrada
             toastStage.setY(bounds.getMaxY());
             FadeTransition ftIn = new FadeTransition(Duration.millis(300), toastLayout);
             ftIn.setFromValue(0); ftIn.setToValue(1); ftIn.play();
@@ -69,7 +64,6 @@ public class NotificacionManager {
             javafx.animation.TranslateTransition tt = new javafx.animation.TranslateTransition(Duration.millis(300), toastLayout);
             tt.setFromY(50); tt.setToY(-20 - toastStage.getHeight()); tt.play();
 
-            // 5. Destruir después de 3 segundos
             PauseTransition delay = new PauseTransition(Duration.seconds(3));
             delay.setOnFinished(e -> {
                 FadeTransition ftOut = new FadeTransition(Duration.millis(300), toastLayout);

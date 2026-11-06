@@ -44,7 +44,6 @@ public class ReinscripcionView extends BorderPane {
         this.setPadding(new Insets(20, 30, 20, 30));
         this.setStyle("-fx-background-color: transparent;");
 
-        // --- CABECERA ESTANDARIZADA (SIMETRÍA TOTAL) ---
         BorderPane header = new BorderPane();
         VBox titleBox = new VBox(5);
         
@@ -72,16 +71,13 @@ public class ReinscripcionView extends BorderPane {
         this.setTop(header);
         BorderPane.setMargin(header, new Insets(0, 0, 20, 0));
 
-        // =========================================================================
-        // CONEXIÓN CON EL PANEL DEL ADMINISTRADOR (VERIFICACIÓN GLOBAL)
-        // =========================================================================
         Preferences prefsGlobales = Preferences.userRoot().node("optem_erp_global");
         boolean periodoAbierto = prefsGlobales.getBoolean("REINSCRIPCION_ABIERTA", false);
 
         if (!periodoAbierto) {
-            mostrarPantallaCerrada(); // Muestra el candado rojo
+            mostrarPantallaCerrada(); 
         } else {
-            construirPantallaInscripcion(); // Muestra la oferta y el horario
+            construirPantallaInscripcion(); 
         }
     }
 
@@ -91,9 +87,6 @@ public class ReinscripcionView extends BorderPane {
         HBox body = new HBox(20);
         body.setAlignment(Pos.TOP_CENTER);
 
-        // ==========================================
-        // COLUMNA IZQUIERDA: CATÁLOGO CLASIFICADO
-        // ==========================================
         VBox colIzq = new VBox(15);
         colIzq.setPrefWidth(420);
         colIzq.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 12; -fx-padding: 20; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12;");
@@ -133,9 +126,6 @@ public class ReinscripcionView extends BorderPane {
 
         colIzq.getChildren().addAll(scrollMaterias, btnInscribir);
 
-        // ==========================================
-        // COLUMNA DERECHA: CALENDARIO Y GENERADOR IA
-        // ==========================================
         VBox colDer = new VBox(15);
         colDer.setPrefWidth(700);
         HBox.setHgrow(colDer, Priority.ALWAYS);

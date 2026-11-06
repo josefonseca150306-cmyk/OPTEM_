@@ -42,7 +42,6 @@ public class AgendaController {
         if (!"Todas".equals(filtroActual)) {
             return actividades.stream().filter(a -> {
                 if ("Tareas".equals(filtroActual)) return "Tarea".equalsIgnoreCase(a.getTipo());
-                // NUEVO FILTRO: Si es "Actividades", mostramos todo lo que NO sea "Tarea"
                 if ("Actividades".equals(filtroActual)) return !"Tarea".equalsIgnoreCase(a.getTipo());
                 if ("Pendientes".equals(filtroActual)) return !"COMPLETADO".equals(a.getEstado());
                 return true;

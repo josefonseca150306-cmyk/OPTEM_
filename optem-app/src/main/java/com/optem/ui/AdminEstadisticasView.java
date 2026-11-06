@@ -33,7 +33,6 @@ public class AdminEstadisticasView {
         layoutMain.setPadding(new Insets(30, 40, 30, 40));
         layoutMain.setStyle("-fx-background-color: transparent;");
 
-        // --- 1. CABECERA Y ESTADO DEL SISTEMA ---
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
         
@@ -52,17 +51,15 @@ public class AdminEstadisticasView {
 
         header.getChildren().addAll(titleBox, spacer, btnRespaldo);
 
-        // Indicador de Estado (Estilo Servidor)
         HBox statusBox = new HBox(10);
         statusBox.setAlignment(Pos.CENTER_LEFT);
         statusBox.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-padding: 12 20; -fx-background-radius: 8; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8;");
         
-        Circle dotStatus = new Circle(5, Color.web("#10b981")); // Verde
+        Circle dotStatus = new Circle(5, Color.web("#10b981"));
         Label lblStatus = new Label("Estado: Óptimo  |  Latencia: 24ms  |  MySQL: Conectada y Sincronizada");
         lblStatus.setStyle("-fx-text-fill: " + colorTextMain + "; -fx-font-weight: bold;");
         statusBox.getChildren().addAll(dotStatus, lblStatus);
 
-        // --- 2. TARJETAS KPI (Key Performance Indicators) ---
         HBox kpiBox = new HBox(20);
         kpiBox.getChildren().addAll(
             crearTarjetaKPI("👥 Usuarios Activos", "1,240", "Estudiantes y Maestros", "#3b82f6"), // Azul
@@ -71,7 +68,6 @@ public class AdminEstadisticasView {
             crearTarjetaKPI("🔄 Consultas BD", "840/s", "Picos estables", "#8b5cf6") // Morado
         );
 
-        // --- 3. GRÁFICO DE TRÁFICO (LINE CHART) ---
         VBox chartBox = new VBox(15);
         chartBox.setPadding(new Insets(20));
         chartBox.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 12; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 2, 2);");
@@ -79,7 +75,6 @@ public class AdminEstadisticasView {
         Label lblChartTit = new Label("Tráfico de Servidores (Últimas 24h)");
         lblChartTit.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: " + colorTextMain + ";");
 
-        // Ejes
         NumberAxis xAxis = new NumberAxis(0, 24, 2);
         xAxis.setLabel("Hora del Día (24 hrs)");
         NumberAxis yAxis = new NumberAxis(0, 2000, 250);
@@ -89,7 +84,6 @@ public class AdminEstadisticasView {
         lineChart.setTitle("");
         lineChart.setPrefHeight(350);
         
-        // Datos Mock (Aquí luego conectarás a MySQL)
         XYChart.Series<Number, Number> series = new XYChart.Series<>();
         series.setName("Tráfico de Hoy");
         series.getData().add(new XYChart.Data<>(7, 1200));
@@ -100,7 +94,6 @@ public class AdminEstadisticasView {
         
         lineChart.getData().add(series);
 
-        // Estilizar Gráfico para Modo Oscuro/Claro
         String chartCss = "CHART_COLOR_1: " + colorFuerte + "; " +
                           "-fx-background-color: transparent; " +
                           "-fx-text-fill: " + colorTextMain + ";";
@@ -108,7 +101,6 @@ public class AdminEstadisticasView {
         
         chartBox.getChildren().addAll(lblChartTit, lineChart);
 
-        // --- 4. CONSOLA DE LOGS DEL SISTEMA ---
         VBox logBox = new VBox(10);
         Label lblLogTit = new Label("Terminal de Registros (System Logs)");
         lblLogTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
@@ -116,7 +108,6 @@ public class AdminEstadisticasView {
         TextArea txtLogs = new TextArea();
         txtLogs.setEditable(false);
         txtLogs.setPrefRowCount(6);
-        // Estilo tipo terminal (Fondo oscuro, letra verde/clara)
         String logStyle = "-fx-control-inner-background: #0f172a; -fx-background-color: #0f172a; -fx-text-fill: #10b981; -fx-font-family: 'Consolas'; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8;";
         txtLogs.setStyle(logStyle);
         txtLogs.setText("[02:45:10] INFO: Sistema iniciado correctamente.\n" +
@@ -126,7 +117,6 @@ public class AdminEstadisticasView {
 
         logBox.getChildren().addAll(lblLogTit, txtLogs);
 
-        // Agregamos todo al layout principal
         layoutMain.getChildren().addAll(header, statusBox, kpiBox, chartBox, logBox);
         
         ScrollPane scroll = new ScrollPane(layoutMain);
