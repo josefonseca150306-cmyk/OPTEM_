@@ -2,6 +2,7 @@ package com.optem.ui;
 
 import java.util.prefs.Preferences;
 
+import com.optem.controllers.AdminController;
 import com.optem.controllers.DashboardController;
 import com.optem.logic.NotificacionManager;
 
@@ -13,6 +14,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -23,6 +25,7 @@ import javafx.scene.shape.Circle;
 public class AdminReinscripcionView {
 
     private final DashboardController controller = new DashboardController();
+    private final AdminController adminController = new AdminController();
     private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder;
 
     private boolean periodoAbierto = false;
@@ -42,9 +45,9 @@ public class AdminReinscripcionView {
         header.setAlignment(Pos.CENTER_LEFT);
         
         VBox titleBox = new VBox(5);
-        Label titulo = new Label("📑 Centro de Reinscripciones (Admin)");
+        Label titulo = new Label("📑 Centro de Reinscripciones y Oferta");
         titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
-        Label subtitulo = new Label("Controla la apertura del ciclo escolar, cuotas y progreso de matrículas.");
+        Label subtitulo = new Label("Controla la apertura del ciclo, asigna maestros a materias y visualiza la matrícula.");
         subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
         titleBox.getChildren().addAll(titulo, subtitulo);
 
@@ -56,6 +59,7 @@ public class AdminReinscripcionView {
 
         header.getChildren().addAll(titleBox, spacer, btnNotificar);
 
+        // --- SECCIÓN 1: ESTADO DEL SISTEMA ---
         HBox controlBox = new HBox(20);
         controlBox.setAlignment(Pos.CENTER_LEFT);
         controlBox.setPadding(new Insets(25));
@@ -74,7 +78,6 @@ public class AdminReinscripcionView {
         
         Label lblAlerta = new Label(periodoAbierto ? "Los estudiantes ahora pueden acceder al módulo y generar sus referencias." : "El módulo de estudiantes está bloqueado. Nadie puede reinscribirse.");
         lblAlerta.setStyle("-fx-text-fill: " + colorTextMain + "; -fx-font-size: 12px;");
-        
         infoEstado.getChildren().addAll(lblEstadoTit, estadoVisual, lblAlerta);
 
         Region spacer2 = new Region(); HBox.setHgrow(spacer2, Priority.ALWAYS);
@@ -96,9 +99,50 @@ public class AdminReinscripcionView {
             
             NotificacionManager.mostrarNotificacion("Cambio de Estado", periodoAbierto ? "Se ha habilitado la reinscripción para todo el campus." : "Las reinscripciones han concluido.", "INFO");
         });
-
         controlBox.getChildren().addAll(infoEstado, spacer2, btnToggleEstado);
 
+        // --- SECCIÓN 2: CREACIÓN DE GRUPOS Y ASIGNACIÓN (NUEVO) ---
+        VBox creacionGruposBox = new VBox(15);
+        creacionGruposBox.setPadding(new Insets(20));
+        creacionGruposBox.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12; -fx-background-radius: 12;");
+        
+        Label lblOfertaTit = new Label("👨‍🏫 Apertura de Grupos (Asignación de Maestros)");
+        lblOfertaTit.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: " + colorTextMain + ";");
+
+        GridPane gridOferta = new GridPane();
+        gridOferta.setHgap(15); gridOferta.setVgap(15);
+
+        TextField txtMateria = new TextField(); txtMateria.setPromptText("Ej: Arquitectura de Software");
+        txtMateria.setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-padding: 8; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6;");
+        
+        TextField txtMaestro = new TextField(); txtMaestro.setPromptText("Nombre del Profesor");
+        txtMaestro.setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-padding: 8; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6;");
+        
+        TextField txtHorario = new TextField(); txtHorario.setPromptText("Ej: Lun/Mié 09:00-11:00");
+        txtHorario.setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-padding: 8; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6;");
+        
+        TextField txtGrupo = new TextField(); txtGrupo.setPromptText("Ej: G6A");
+        txtGrupo.setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + "; -fx-padding: 8; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6;");
+
+        gridOferta.add(crearLabelSimple("Materia a ofertar:"), 0, 0); gridOferta.add(txtMateria, 0, 1);
+        gridOferta.add(crearLabelSimple("Maestro Asignado:"), 1, 0); gridOferta.add(txtMaestro, 1, 1);
+        gridOferta.add(crearLabelSimple("Horario Asignado:"), 2, 0); gridOferta.add(txtHorario, 2, 1);
+        gridOferta.add(crearLabelSimple("Clave de Grupo:"), 3, 0); gridOferta.add(txtGrupo, 3, 1);
+
+        Button btnCrearGrupo = new Button("Registrar Grupo en Sistema");
+        btnCrearGrupo.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 6; -fx-cursor: hand;");
+        btnCrearGrupo.setOnAction(e -> {
+            if (adminController.crearGrupoOficial(txtMateria.getText(), txtMaestro.getText(), txtGrupo.getText(), txtHorario.getText())) {
+                NotificacionManager.mostrarNotificacion("Grupo Registrado", "La materia ya está disponible en el MockDB para maestros y alumnos.", "INFO");
+                txtMateria.clear(); txtMaestro.clear(); txtHorario.clear(); txtGrupo.clear();
+            } else {
+                NotificacionManager.mostrarNotificacion("Error", "Debes llenar Materia y Maestro.", "ERROR");
+            }
+        });
+
+        creacionGruposBox.getChildren().addAll(lblOfertaTit, gridOferta, btnCrearGrupo);
+
+        // --- SECCIÓN 3: PROGRESO Y CONFIGURACIÓN ---
         HBox confProgesoBox = new HBox(20);
 
         VBox configBox = new VBox(15);
@@ -158,7 +202,7 @@ public class AdminReinscripcionView {
 
         confProgesoBox.getChildren().addAll(configBox, progresoBox);
 
-        layoutMain.getChildren().addAll(header, controlBox, confProgesoBox);
+        layoutMain.getChildren().addAll(header, controlBox, creacionGruposBox, confProgesoBox);
         
         ScrollPane scroll = new ScrollPane(layoutMain);
         scroll.setFitToWidth(true);
@@ -179,10 +223,15 @@ public class AdminReinscripcionView {
         colorBorder = isDark ? "#333333" : "#e2e8f0";
     }
 
+    private Label crearLabelSimple(String texto) {
+        Label lbl = new Label(texto);
+        lbl.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px; -fx-font-weight: bold;");
+        return lbl;
+    }
+
     private VBox crearCajaInput(String titulo, DatePicker dp) {
         VBox box = new VBox(5);
-        Label lbl = new Label(titulo);
-        lbl.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px; -fx-font-weight: bold;");
+        Label lbl = crearLabelSimple(titulo);
         dp.setStyle("-fx-control-inner-background: " + colorBgBase + "; -fx-background-color: " + colorBgBase + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 6;");
         dp.getEditor().setStyle("-fx-background-color: " + colorBgBase + "; -fx-text-fill: " + colorTextMain + ";");
         box.getChildren().addAll(lbl, dp);
@@ -191,8 +240,7 @@ public class AdminReinscripcionView {
 
     private VBox crearCajaInputStr(String titulo, TextField tf) {
         VBox box = new VBox(5);
-        Label lbl = new Label(titulo);
-        lbl.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px; -fx-font-weight: bold;");
+        Label lbl = crearLabelSimple(titulo);
         box.getChildren().addAll(lbl, tf);
         return box;
     }

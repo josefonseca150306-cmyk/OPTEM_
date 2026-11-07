@@ -34,10 +34,11 @@ public class ReinscripcionView extends BorderPane {
     private final AdminController adminController = new AdminController();
     private final ReinscripcionController controller = new ReinscripcionController();
 
-    private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder;
+    private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder, correoActual;
     private final Map<String, ComboBox<String>> combosMaterias = new HashMap<>();
     private GridPane gridHorario;
     private boolean existeEmpalme = false;
+    private boolean yaEstaInscrito = false;
 
     public ReinscripcionView() {
         leerPreferencias();
@@ -73,9 +74,12 @@ public class ReinscripcionView extends BorderPane {
 
         Preferences prefsGlobales = Preferences.userRoot().node("optem_erp_global");
         boolean periodoAbierto = prefsGlobales.getBoolean("REINSCRIPCION_ABIERTA", false);
+        yaEstaInscrito = prefsGlobales.getBoolean("YA_INSCRITO_" + correoActual, false);
 
         if (!periodoAbierto) {
-            mostrarPantallaCerrada(); 
+            mostrarPantallaCerrada("El periodo de reinscripción se encuentra CERRADO."); 
+        } else if (yaEstaInscrito) {
+            mostrarPantallaCerrada("¡Ya estás inscrito en este periodo escolar! Verifica tu Inicio.");
         } else {
             construirPantallaInscripcion(); 
         }
@@ -120,6 +124,7 @@ public class ReinscripcionView extends BorderPane {
             if (existeEmpalme) {
                 NotificacionManager.mostrarNotificacion("❌ Error de Validación", "No puedes inscribirte. Tienes materias chocando en el mismo horario.", "URGENTE");
             } else {
+                guardarInscripcionOficial();
                 mostrarAlertaHojaPago();
             }
         });
@@ -191,6 +196,28 @@ public class ReinscripcionView extends BorderPane {
         this.setCenter(scrollGlobal);
         
         repintarHorario();
+    }
+    
+    // MÉTODO QUE GUARDA EN EL MOCK DB Y MARCA LA INSCRIPCIÓN COMO REALIZADA
+    private void guardarInscripcionOficial() {
+        int materiasInscritas = 0;
+        for (Map.Entry<String, ComboBox<String>> entry : combosMaterias.entrySet()) {
+            String materia = entry.getKey();
+            String seleccion = entry.getValue().getValue();
+            
+            // Si el alumno escogió un horario válido (no la opción de "no cursar")
+            if (seleccion != null && !seleccion.contains("— No cursar —")) {
+                controller.inscribirAlumnoMateria(correoActual, materia);
+                materiasInscritas++;
+            }
+        }
+        
+        if (materiasInscritas > 0) {
+            Preferences prefsGlobales = Preferences.userRoot().node("optem_erp_global");
+            prefsGlobales.putBoolean("YA_INSCRITO_" + correoActual, true);
+        } else {
+            NotificacionManager.mostrarNotificacion("Advertencia", "No has seleccionado ninguna materia para inscribir.", "URGENTE");
+        }
     }
 
     private Label crearTituloSeccion(String texto) {
@@ -324,17 +351,21 @@ public class ReinscripcionView extends BorderPane {
 
         Label icon = new Label("📧"); icon.setStyle("-fx-font-size: 40px; -fx-font-family: 'Segoe UI Emoji';");
         Label title = new Label("¡Reinscripción Exitosa!"); title.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: " + colorTextMain + ";");
-        Label msg = new Label("Tu hoja de referencia para pago te llegará a tu correo institucional.");
+        Label msg = new Label("Las materias se han guardado en tu sistema y ya aparecen en tu Inicio.\nTu hoja de referencia para pago llegará a tu correo institucional.");
         msg.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-wrap-text: true; -fx-text-alignment: center;");
         
-        Button btnOk = new Button("Entendido");
+        Button btnOk = new Button("Ir a mi Inicio");
         btnOk.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
         
         alertBox.getChildren().addAll(icon, title, msg, btnOk);
         
         javafx.stage.Stage popup = new javafx.stage.Stage();
         popup.initStyle(javafx.stage.StageStyle.TRANSPARENT);
-        btnOk.setOnAction(e -> popup.close());
+        btnOk.setOnAction(e -> {
+            popup.close();
+            // Al dar clic, bloquea la pantalla de reinscripción por completo
+            mostrarPantallaCerrada("¡Ya estás inscrito en este periodo escolar! Verifica tu Inicio.");
+        });
         
         javafx.scene.Scene scene = new javafx.scene.Scene(alertBox);
         scene.setFill(Color.TRANSPARENT);
@@ -366,13 +397,12 @@ public class ReinscripcionView extends BorderPane {
         HBox malla = new HBox(15);
         malla.setPadding(new Insets(10));
 
-        malla.getChildren().addAll(
-            crearColumnaPeriodo("Periodo_4", new String[]{"Inglés 7|#008000", "Diseño Compiladores|#008000", "Interacción H-C|#008000", "Arq. Computadoras|#008000", "Estructuras Datos|#008000", "Microcontroladores|#008000", "Requisitos Soft|#008000"}),
-            crearColumnaPeriodo("Periodo_5", new String[]{"Inglés 8|#8BC34A", "Bases de Datos|#8BC34A", "Innovación Sust.|#8BC34A", "Prog. Paralela|#8BC34A", "Análisis y Diseño|#8BC34A", "Redes y Telecom.|#8BC34A", "Met. Desarrollo|#8BC34A"}),
-            crearColumnaPeriodo("Periodo_6", new String[]{"Administración|#008000", "BD Avanzadas|transparent", "Graficación|transparent", "Teoría Lenguajes|#008000", "Desarrollo Web|transparent", "Arq. de Software|transparent", "Pruebas y Mant.|transparent"}),
-            crearColumnaPeriodo("Periodo_7", new String[]{"Inteligencia Art.|transparent", "Admin BD|transparent", "Ética Informática|transparent", "Métricas Software|transparent", "Simulación|transparent", "Sistemas Op.|transparent", "Sistemas Dist.|transparent"}),
-            crearColumnaPeriodo("Periodo_8", new String[]{"Proc. Imágenes|transparent", "Organización Proyectos|transparent", "Datawarehouse|transparent", "Integradora Prof.|transparent", "Calidad Software|transparent", "Herr. Admin. Sis|transparent", "Seguridad Inf.|transparent"})
-        );
+        // BUCLE LIMPIO: Lee los datos directamente del controlador
+        Map<String, List<String>> datosMapa = controller.getMapaCurricularEstudiante();
+        for (Map.Entry<String, List<String>> periodo : datosMapa.entrySet()) {
+            String[] materias = periodo.getValue().toArray(new String[0]);
+            malla.getChildren().add(crearColumnaPeriodo(periodo.getKey(), materias));
+        }
 
         ScrollPane scrollMapa = new ScrollPane(malla);
         scrollMapa.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -424,7 +454,7 @@ public class ReinscripcionView extends BorderPane {
         return col;
     }
 
-    private void mostrarPantallaCerrada() {
+    private void mostrarPantallaCerrada(String mensaje) {
         VBox panelCerrado = new VBox(20);
         panelCerrado.setAlignment(Pos.CENTER);
         panelCerrado.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-padding: 50; -fx-border-color: #D32F2F; -fx-border-width: 2; -fx-border-radius: 20; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(211,47,47,0.2), 30, 0, 0, 10);");
@@ -432,7 +462,7 @@ public class ReinscripcionView extends BorderPane {
         Label lblIcono = new Label("🔒");
         lblIcono.setStyle("-fx-font-size: 70px; -fx-font-family: 'Segoe UI Emoji'; -fx-text-fill: " + colorTextMain + ";");
         
-        Label lblMensaje = new Label("El periodo de reinscripción se encuentra CERRADO.");
+        Label lblMensaje = new Label(mensaje);
         lblMensaje.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #D32F2F;");
         
         Label lblSub = new Label("Por favor, mantente atento a los comunicados oficiales de la UAEMéx.");
@@ -447,7 +477,7 @@ public class ReinscripcionView extends BorderPane {
 
     private void leerPreferencias() {
         Preferences prefs = Preferences.userNodeForPackage(DashboardView.class);
-        String correoActual = prefs.get("LAST_ACTIVE_ACCOUNT", "");
+        correoActual = prefs.get("LAST_ACTIVE_ACCOUNT", "");
         boolean isDark = prefs.getBoolean("PREF_DARK_MODE_" + correoActual, false);
         
         colorFuerte = prefs.get("PREF_ACCENT_COLOR_" + correoActual, "#3D5A4D");

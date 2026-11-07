@@ -216,17 +216,28 @@ public class DashboardView {
         else if (rol.equals("MAESTRO")) {
             btnInicio = createMenuButton("🏠", "Inicio"); btnInicio.setOnAction(e -> { root.setCenter(new InicioMaestroView().getView()); actualizarSeleccionMenu(btnInicio); });
             btnAgenda = createMenuButton("📅", "Mi Agenda"); btnAgenda.setOnAction(e -> { try { root.setCenter(new AgendaMaestroView().getView()); actualizarSeleccionMenu(btnAgenda); } catch(Exception ex) {} });
-            btnNotas = createMenuButton("📝", "Notas"); btnNotas.setOnAction(e -> { root.setCenter(new NotasView().getView()); actualizarSeleccionMenu(btnNotas); });
-            btnTareas = createMenuButton("✅", "Tareas"); btnTareas.setOnAction(e -> { root.setCenter(new TareasMaestroView().getView()); actualizarSeleccionMenu(btnTareas); });
+            // Reemplaza la línea vieja del botón Notas por esta:
+            btnNotas = createMenuButton("📝", "Cuaderno Docente"); 
+            btnNotas.setOnAction(e -> { root.setCenter(new NotasMaestroView().getView()); actualizarSeleccionMenu(btnNotas); });
+            
+            // 1. Actividades Personales del Maestro
+            btnActividades = createMenuButton("✅", "Mis Actividades"); 
+            btnActividades.setOnAction(e -> { root.setCenter(new ActividadesMaestroView().getView()); actualizarSeleccionMenu(btnActividades); });
+            
+            // 2. Nueva Gestión de Tareas para los Alumnos
+            btnTareas = createMenuButton("📤", "Asignar Tareas"); 
+            btnTareas.setOnAction(e -> { root.setCenter(new TareasMaestroView().getView()); actualizarSeleccionMenu(btnTareas); });
+            
             btnReuniones = createMenuButton("🎥", "Reuniones"); btnReuniones.setOnAction(e -> { root.setCenter(new ReunionesMaestroView().getView()); actualizarSeleccionMenu(btnReuniones); });
             btnGrupos = createMenuButton("👥", "Mis Grupos"); btnGrupos.setOnAction(e -> { root.setCenter(new GruposMaestroView()); actualizarSeleccionMenu(btnGrupos); });
-            btnPomodoro = createMenuButton("⏱", "Pomodoro"); btnPomodoro.setOnAction(e -> { root.setCenter(new PomodoroView()); actualizarSeleccionMenu(btnPomodoro); });
-            btnLogros = createMenuButton("🏆", "Logros"); btnLogros.setOnAction(e -> { root.setCenter(new LogrosView()); actualizarSeleccionMenu(btnLogros); });
+            btnPomodoro = createMenuButton("⏱", "Pomodoro"); btnPomodoro.setOnAction(e -> { root.setCenter(new PomodoroMaestroView().getView()); actualizarSeleccionMenu(btnPomodoro); });
+            btnLogros = createMenuButton("🏆", "Logros"); btnLogros.setOnAction(e -> { root.setCenter(new LogrosMaestroView().getView()); actualizarSeleccionMenu(btnLogros); });
             btnAjustes = createMenuButton("⚙", "Ajustes"); btnAjustes.setOnAction(e -> { root.setCenter(new AjustesView(themeUpdater, correoUsuario).getView()); actualizarSeleccionMenu(btnAjustes); });
 
-            menuButtonsBox.getChildren().addAll(btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnGrupos, btnPomodoro, btnLogros, btnAjustes);
+            // Agregamos btnActividades y btnTareas al menú
+            menuButtonsBox.getChildren().addAll(btnInicio, btnAgenda, btnNotas, btnActividades, btnTareas, btnReuniones, btnGrupos, btnPomodoro, btnLogros, btnAjustes);
             btnInicio.fire();
-        } 
+        }
         else { 
             construirInicioEstudiante(animacionesActivas, colorFuerte, stage);
             

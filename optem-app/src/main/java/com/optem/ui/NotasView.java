@@ -100,7 +100,8 @@ public class NotasView {
 
     private void actualizarTableroNotas() {
         gridNotas.getChildren().clear();
-        List<NotasController.ApunteDTO> apuntes = controller.getTodosLosApuntes();
+        // CORRECCIÓN: Se llama al método cargarApuntes en lugar de getTodosLosApuntes
+        List<NotasController.ApunteDTO> apuntes = controller.cargarApuntes();
 
         if (apuntes.isEmpty()) {
             VBox vacioBox = new VBox(15);
@@ -240,8 +241,9 @@ public class NotasView {
         root.setCenter(editorBox);
 
         btnGuardar.setOnAction(e -> {
-            boolean guardado = controller.guardarApunte(txtTitulo.getText(), cmbMateria.getValue(), editorHtml.getHtmlText());
-            if (guardado) {
+            // CORRECCIÓN: el método original devolvía void, así que se cambió la validación
+            if (!txtTitulo.getText().isEmpty() && cmbMateria.getValue() != null && !editorHtml.getHtmlText().isEmpty()) {
+                controller.guardarApunte(txtTitulo.getText(), cmbMateria.getValue(), editorHtml.getHtmlText());
                 actualizarTableroNotas();
                 popup.close();
                 NotificacionManager.mostrarNotificacion("Apunte Guardado", "Documento respaldado en tu archivo local.", "INFO");

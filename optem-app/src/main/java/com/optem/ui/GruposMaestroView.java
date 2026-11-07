@@ -1,5 +1,7 @@
 package com.optem.ui;
 
+import java.util.List;
+import java.util.Map;
 import java.util.prefs.Preferences;
 
 import com.optem.controllers.AjustesController;
@@ -57,16 +59,16 @@ public class GruposMaestroView extends VBox {
 
         header.getChildren().addAll(titleBox, spacer, btnNuevoGrupo);
 
-        HBox metricasHeader = new HBox(20);
-        metricasHeader.getChildren().addAll(
-            crearMetricaRapida("Total de Grupos Activos", "2"),
-            crearMetricaRapida("Alumnos Totales", "42")
-        );
-
         listaGrupos = new VBox(15);
         
-        agregarTarjetaGrupo("Ingeniería de Software", "Lun/Mié 13:00 - 15:00", controller.generarCodigoClase(), 24, 8.5);
-        agregarTarjetaGrupo("Bases de Datos Avanzadas", "Mar/Jue 07:00 - 09:00", controller.generarCodigoClase(), 18, 7.2);
+        // Cargar los grupos directamente desde el Controlador (conectado a RAM)
+        cargarGruposDesdeMemoria();
+
+        HBox metricasHeader = new HBox(20);
+        metricasHeader.getChildren().addAll(
+            crearMetricaRapida("Total de Grupos Activos", String.valueOf(listaGrupos.getChildren().size())),
+            crearMetricaRapida("Alumnos Totales Estimados", "Simulando...")
+        );
 
         ScrollPane scroll = new ScrollPane(listaGrupos);
         scroll.setFitToWidth(true);
@@ -89,6 +91,16 @@ public class GruposMaestroView extends VBox {
         colorBorder = isDark ? "#333333" : "#e2e8f0";
     }
 
+    private void cargarGruposDesdeMemoria() {
+        listaGrupos.getChildren().clear();
+        List<Map<String,String>> grupos = controller.obtenerTodosLosGrupos();
+        
+        for (Map<String, String> grupo : grupos) {
+            // Pasamos la clave real del grupo al método para poder inscribir a alumnos ahí
+            agregarTarjetaGrupo(grupo.get("clave"), grupo.get("nombre"), grupo.get("horario"), grupo.get("clave"), 0, 8.0);
+        }
+    }
+
     private VBox crearMetricaRapida(String titulo, String valor) {
         VBox box = new VBox(5);
         box.setPadding(new Insets(15, 25, 15, 25));
@@ -101,7 +113,7 @@ public class GruposMaestroView extends VBox {
         return box;
     }
 
-    private void agregarTarjetaGrupo(String materia, String horario, String codigoAcceso, int totalAlumnos, double promedioGrupo) {
+    private void agregarTarjetaGrupo(String claveUnica, String materia, String horario, String codigoAcceso, int totalAlumnos, double promedioGrupo) {
         VBox card = new VBox(15);
         card.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-padding: 25; -fx-background-radius: 12; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 2, 2);");
 
@@ -146,7 +158,9 @@ public class GruposMaestroView extends VBox {
 
         Button btnInscribirManual = new Button("👤 Añadir Alumno");
         btnInscribirManual.setStyle("-fx-background-color: transparent; -fx-border-color: " + colorFuerte + "; -fx-border-radius: 6; -fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold; -fx-padding: 6 12; -fx-cursor: hand;");
-        btnInscribirManual.setOnAction(e -> abrirModalAgregarAlumnoManual(materia, card.getScene().getWindow()));
+        
+        // Al dar clic, mandamos la clave real del grupo para que el alumno se inscriba ahí
+        btnInscribirManual.setOnAction(e -> abrirModalAgregarAlumnoManual(claveUnica, materia, card.getScene().getWindow()));
 
         Region sp2 = new Region(); HBox.setHgrow(sp2, Priority.ALWAYS);
 
@@ -244,7 +258,7 @@ public class GruposMaestroView extends VBox {
         btnGuardar.setOnAction(e -> {
             boolean exito = controller.crearGrupo(txtNombre.getText(), txtHorario.getText());
             if (exito) {
-                agregarTarjetaGrupo(txtNombre.getText(), txtHorario.getText(), controller.generarCodigoClase(), 0, 0.0);
+                cargarGruposDesdeMemoria(); // Refresca la vista leyendo de nuevo de la RAM
                 NotificacionManager.mostrarNotificacion("Grupo Creado", "La clase " + txtNombre.getText() + " se generó con éxito.", "INFO");
                 modal.close();
             }
@@ -261,7 +275,7 @@ public class GruposMaestroView extends VBox {
         modal.setY(owner.getY() + (owner.getHeight() - modal.getHeight()) / 2);
     }
 
-    private void abrirModalAgregarAlumnoManual(String materia, Window owner) {
+    private void abrirModalAgregarAlumnoManual(String claveGrupo, String materia, Window owner) {
         Stage modal = new Stage(); 
         modal.setTitle("Añadir Alumno");
         modal.initModality(Modality.APPLICATION_MODAL);
@@ -289,12 +303,12 @@ public class GruposMaestroView extends VBox {
         btnCancelar.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMuted + "; -fx-cursor: hand;");
         btnCancelar.setOnAction(e -> modal.close());
 
-        Button btnBuscar = new Button("Buscar e Inscribir");
+        Button btnBuscar = new Button("Inscribir Alumno");
         btnBuscar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand;");
         
         btnBuscar.setOnAction(e -> {
-            if (controller.agregarAlumnoManual(txtBusqueda.getText())) {
-                NotificacionManager.mostrarNotificacion("Alumno Inscrito", "Se ha añadido al alumno exitosamente a " + materia, "INFO");
+            if (controller.agregarAlumnoManual(claveGrupo, txtBusqueda.getText())) {
+                NotificacionManager.mostrarNotificacion("Alumno Inscrito", "Se ha añadido a " + txtBusqueda.getText() + " exitosamente.", "INFO");
                 modal.close();
             }
         });
