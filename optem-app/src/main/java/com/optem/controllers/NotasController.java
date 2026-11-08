@@ -24,11 +24,15 @@ public class NotasController {
     // Paleta premium de colores pastel para notas tipo "Sticky Notes"
     private final String[] coloresKeep = {"#FFADAD", "#FFD6A5", "#FDFFB6", "#CAFFBF", "#9BF6FF", "#A0C4FF", "#BDB2FF", "#FFC6FF"};
     
-    private final String archivoNotas = "mis_apuntes.dat";
+    private final String archivoNotas;
 
     public NotasController() {
         Preferences p = Preferences.userNodeForPackage(DashboardView.class);
         this.usuarioActual = p.get("LAST_ACTIVE_ACCOUNT", "default");
+        
+        // Se genera un archivo de notas exclusivo para este alumno
+        String cuentaLimpia = this.usuarioActual.replaceAll("[^a-zA-Z0-9]", "_");
+        this.archivoNotas = "notas_alumno_" + cuentaLimpia + ".dat";
     }
 
     public static class ApunteDTO implements Serializable {

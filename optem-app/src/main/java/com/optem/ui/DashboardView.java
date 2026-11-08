@@ -129,7 +129,7 @@ public class DashboardView {
             stage.setY(event.getScreenY() - yOffset); 
         });
 
-        String btnControlStyle = "-fx-background-color: transparent; -fx-text-fill: -color-text-muted; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 15;";
+        String btnControlStyle = "-fx-background-color: transparent; -fx-text-fill: -color-text-muted; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 15; -fx-effect: null;";
         String btnControlHover = "-fx-background-color: rgba(128,128,128,0.2); -fx-text-fill: -color-text-main; -fx-background-radius: 5;";
         
         Button btnMinimizar = new Button("—"); btnMinimizar.setStyle(btnControlStyle);
@@ -141,7 +141,9 @@ public class DashboardView {
         btnMaxim.setOnAction(e -> {
             Screen screen = Screen.getPrimary(); Rectangle2D bounds = screen.getVisualBounds();
             if (isMaximized) {
-                double w = bounds.getWidth() * 0.85; double h = bounds.getHeight() * 0.85;
+                // Si la pantalla es muy pequeña, forzamos un mínimo
+                double w = Math.max(1024, bounds.getWidth() * 0.85); 
+                double h = Math.max(700, bounds.getHeight() * 0.85);
                 stage.setWidth(w); stage.setHeight(h);
                 stage.setX(bounds.getMinX() + (bounds.getWidth() - w) / 2); stage.setY(bounds.getMinY() + (bounds.getHeight() - h) / 2);
                 isMaximized = false; btnMaxim.setText("🗖"); 
@@ -163,7 +165,7 @@ public class DashboardView {
         sidebar.setPadding(new Insets(15, 20, 15, 20));
         sidebar.setStyle("-fx-background-color: -color-bg-panel; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 2, 0);");
 
-        btnToggle = new Button("≡"); btnToggle.setStyle("-fx-background-color: transparent; -fx-font-size: 20px; -fx-cursor: hand; -fx-text-fill: -color-text-main;"); btnToggle.setAlignment(Pos.CENTER_LEFT);
+        btnToggle = new Button("≡"); btnToggle.setStyle("-fx-background-color: transparent; -fx-font-size: 20px; -fx-cursor: hand; -fx-text-fill: -color-text-main; -fx-effect: null;"); btnToggle.setAlignment(Pos.CENTER_LEFT);
 
         VBox userBox = new VBox(10); userBox.setAlignment(Pos.CENTER); userBox.setPadding(new Insets(10, 0, 20, 0));
         userPic = new Circle(35); userPic.setFill(Color.web(colorFuerte)); userPic.setStyle("-fx-cursor: hand;");
@@ -175,7 +177,7 @@ public class DashboardView {
         }
 
         lblName = new Label(nombreEstudianteActivo.split(" ")[0]); 
-        lblName.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: -color-text-main;");
+        lblName.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: -color-text-main; -fx-effect: null;");
         userBox.getChildren().addAll(userPic, lblName);
 
         ContextMenu profileMenu = new ContextMenu(); profileMenu.getStyleClass().add("menu-dominio-oro"); 
@@ -316,26 +318,25 @@ public class DashboardView {
         mainRoot.getChildren().addAll(appLayout, chatContainer, btnBurbujaIA);
         mainRoot.setStyle("-fx-background-color: -color-bg-base;");
 
-        // --- FIX RESPONSIVIDAD: Calcula el tamaño según el monitor ---
+        // --- FIX DEFINITIVO RESPONSIVIDAD ---
         Screen screen = Screen.getPrimary();
         Rectangle2D bounds = screen.getVisualBounds();
         
-        double prefWidth = Math.max(1024, bounds.getWidth() * 0.85);
-        double prefHeight = Math.max(768, bounds.getHeight() * 0.85);
-
-        Scene scene = new Scene(mainRoot, prefWidth, prefHeight);
+        Scene scene = new Scene(mainRoot, bounds.getWidth(), bounds.getHeight());
         aplicarTemaGlobal(scene, correoUsuario);
         configurarNavegacionPorTecladoGlobal(scene, stage);
         stage.setScene(scene); 
         
         Platform.runLater(() -> { 
             if (!wasShowing) {
-                stage.setX(bounds.getMinX() + (bounds.getWidth() - prefWidth) / 2); 
-                stage.setY(bounds.getMinY() + (bounds.getHeight() - prefHeight) / 2);
-                stage.setWidth(prefWidth); 
-                stage.setHeight(prefHeight);
-                isMaximized = false;
-                btnMaxim.setText("🗖");
+                stage.setX(bounds.getMinX()); 
+                stage.setY(bounds.getMinY());
+                stage.setWidth(bounds.getWidth()); 
+                stage.setHeight(bounds.getHeight());
+                
+                isMaximized = true; 
+                btnMaxim.setText("🗗"); 
+                
                 stage.show(); 
                 stage.toFront(); 
             } else {
@@ -418,7 +419,7 @@ public class DashboardView {
 
         VBox materiasPane = new VBox(15); 
         materiasPane.setStyle("-fx-background-color: -color-bg-panel; -fx-padding: 25; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 2, 0);");
-        Label lblMateriasTitle = new Label("📚 Mis Clases Registradas"); lblMateriasTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main;"); 
+        Label lblMateriasTitle = new Label("📚 Mis Clases Registradas"); lblMateriasTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main; -fx-effect: null;"); 
         lblMateriasTitle.getStyleClass().add("lbl-titulos-seccion");
 
         VBox listaTarjetas = new VBox(10);
@@ -435,8 +436,8 @@ public class DashboardView {
                 iconPane.getChildren().addAll(circle, initial);
                 
                 VBox details = new VBox(3);
-                Label lblNom = new Label(clase.get("clave") + " - " + clase.get("nombre")); lblNom.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main;"); lblNom.getStyleClass().add("lbl-text-normal");
-                Label lblProf = new Label("👨‍🏫 " + clase.get("profesor")); lblProf.setStyle("-fx-text-fill: -color-text-muted;"); lblProf.getStyleClass().add("lbl-text-pequeno");
+                Label lblNom = new Label(clase.get("clave") + " - " + clase.get("nombre")); lblNom.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main; -fx-effect: null;"); lblNom.getStyleClass().add("lbl-text-normal");
+                Label lblProf = new Label("👨‍🏫 " + clase.get("profesor")); lblProf.setStyle("-fx-text-fill: -color-text-muted; -fx-effect: null;"); lblProf.getStyleClass().add("lbl-text-pequeno");
                 details.getChildren().addAll(lblNom, lblProf);
                 
                 Region spc = new Region(); HBox.setHgrow(spc, Priority.ALWAYS);
@@ -451,8 +452,8 @@ public class DashboardView {
                 }
                 
                 VBox timeBox = new VBox(3); timeBox.setAlignment(Pos.CENTER_RIGHT);
-                Label lblHorario = new Label(diasCompletos); lblHorario.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-background-color: " + colorFuerte + "15; -fx-padding: 4 8; -fx-background-radius: 6;"); lblHorario.getStyleClass().add("lbl-text-pequeno");
-                Label lblGrupo = new Label("Grupo: " + clase.get("grupo")); lblGrupo.setStyle("-fx-text-fill: -color-text-muted;"); lblGrupo.getStyleClass().add("lbl-text-pequeno");
+                Label lblHorario = new Label(diasCompletos); lblHorario.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-background-color: " + colorFuerte + "15; -fx-padding: 4 8; -fx-background-radius: 6; -fx-effect: null;"); lblHorario.getStyleClass().add("lbl-text-pequeno");
+                Label lblGrupo = new Label("Grupo: " + clase.get("grupo")); lblGrupo.setStyle("-fx-text-fill: -color-text-muted; -fx-effect: null;"); lblGrupo.getStyleClass().add("lbl-text-pequeno");
                 timeBox.getChildren().addAll(lblHorario, lblGrupo);
                 
                 classCard.getChildren().addAll(iconPane, details, spc, timeBox);
@@ -479,16 +480,16 @@ public class DashboardView {
         header.setStyle("-fx-background-color: " + colorFuerte + ";");
         
         StackPane iconPane = new StackPane(); Circle circle = new Circle(18, Color.web("#ffffff", 0.2));
-        Label initial = new Label(clase.get("nombre").substring(0, 1)); initial.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: white;");
+        Label initial = new Label(clase.get("nombre").substring(0, 1)); initial.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: white; -fx-effect: null;");
         iconPane.getChildren().addAll(circle, initial);
         
         VBox headerText = new VBox(2);
-        Label lblTitulo = new Label(clase.get("nombre")); lblTitulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;");
-        Label lblSubtitle = new Label("Grupo: " + clase.get("grupo") + " | General"); lblSubtitle.setStyle("-fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 12px;");
+        Label lblTitulo = new Label(clase.get("nombre")); lblTitulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white; -fx-effect: null;");
+        Label lblSubtitle = new Label("Grupo: " + clase.get("grupo") + " | General"); lblSubtitle.setStyle("-fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 12px; -fx-effect: null;");
         headerText.getChildren().addAll(lblTitulo, lblSubtitle);
         
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
-        Button btnCerrar = new Button("✕"); btnCerrar.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand;");
+        Button btnCerrar = new Button("✕"); btnCerrar.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 18px; -fx-cursor: hand; -fx-effect: null;");
         btnCerrar.setOnAction(e -> popup.close());
         header.getChildren().addAll(iconPane, headerText, spacer, btnCerrar);
         
@@ -516,7 +517,7 @@ public class DashboardView {
         txtRedactar.setStyle("-fx-background-color: -color-bg-base; -fx-text-fill: -color-text-main; -fx-padding: 10; -fx-background-radius: 8; -fx-border-color: -color-border; -fx-border-radius: 8;");
         
         Button btnPublicar = new Button("Publicar en el canal");
-        btnPublicar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;");
+        btnPublicar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand; -fx-effect: null;");
         
         btnPublicar.setOnAction(e -> {
             if(!txtRedactar.getText().trim().isEmpty()) {
@@ -543,15 +544,15 @@ public class DashboardView {
         
         HBox header = new HBox(10); header.setAlignment(Pos.CENTER_LEFT);
         Circle avatar = new Circle(15, Color.web(colorHighlight, 0.2));
-        Label inicial = new Label(autor.substring(0, 1)); inicial.setStyle("-fx-text-fill: " + colorHighlight + "; -fx-font-weight: bold;");
+        Label inicial = new Label(autor.substring(0, 1)); inicial.setStyle("-fx-text-fill: " + colorHighlight + "; -fx-font-weight: bold; -fx-effect: null;");
         StackPane avatarBox = new StackPane(avatar, inicial);
         
-        Label lblAutor = new Label(autor); lblAutor.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main;");
-        Label lblFecha = new Label("Hoy"); lblFecha.setStyle("-fx-text-fill: -color-text-muted; -fx-font-size: 12px;");
+        Label lblAutor = new Label(autor); lblAutor.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main; -fx-effect: null;");
+        Label lblFecha = new Label("Hoy"); lblFecha.setStyle("-fx-text-fill: -color-text-muted; -fx-font-size: 12px; -fx-effect: null;");
         header.getChildren().addAll(avatarBox, lblAutor, lblFecha);
         
-        Label lblTitulo = new Label(titulo); lblTitulo.setStyle("-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: -color-text-main;");
-        Label lblContenido = new Label(contenido); lblContenido.setStyle("-fx-text-fill: -color-text-main; -fx-wrap-text: true;");
+        Label lblTitulo = new Label(titulo); lblTitulo.setStyle("-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: -color-text-main; -fx-effect: null;");
+        Label lblContenido = new Label(contenido); lblContenido.setStyle("-fx-text-fill: -color-text-main; -fx-wrap-text: true; -fx-effect: null;");
         
         post.getChildren().addAll(header, lblTitulo, lblContenido);
         return post;
@@ -656,7 +657,7 @@ public class DashboardView {
             } 
         } catch(Exception e) { imgContainer.setStyle("-fx-background-color: -color-bg-base; -fx-background-radius: 15 15 0 0;"); }
         
-        VBox info = new VBox(2); info.setPadding(new Insets(15)); Label t = new Label(title); t.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main;"); t.getStyleClass().add("lbl-text-normal"); Label s = new Label(sub); s.setStyle("-fx-text-fill: -color-text-muted;"); s.getStyleClass().add("lbl-text-pequeno"); info.getChildren().addAll(t, s); card.getChildren().addAll(imgContainer, info);
+        VBox info = new VBox(2); info.setPadding(new Insets(15)); Label t = new Label(title); t.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main; -fx-effect: null;"); t.getStyleClass().add("lbl-text-normal"); Label s = new Label(sub); s.setStyle("-fx-text-fill: -color-text-muted; -fx-effect: null;"); s.getStyleClass().add("lbl-text-pequeno"); info.getChildren().addAll(t, s); card.getChildren().addAll(imgContainer, info);
         ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), card); scaleIn.setToX(1.03); scaleIn.setToY(1.03); ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), card); scaleOut.setToX(1.0); scaleOut.setToY(1.0); card.setOnMouseEntered(e -> scaleIn.playFromStart()); card.setOnMouseExited(e -> scaleOut.playFromStart()); return card;
     }
 
@@ -665,7 +666,7 @@ public class DashboardView {
     private VBox createAnimatedShieldFooter(boolean animacionesActivas) { 
         VBox f = new VBox(15); f.setAlignment(Pos.CENTER); f.setPadding(new Insets(35, 0, 20, 0)); 
         Label info = new Label("Optem ERP © 2026 | Universidad Autónoma del Estado de México");
-        info.setStyle("-fx-text-fill: -color-text-muted;"); info.getStyleClass().add("lbl-text-pequeno");
+        info.setStyle("-fx-text-fill: -color-text-muted; -fx-effect: null;"); info.getStyleClass().add("lbl-text-pequeno");
         f.getChildren().add(info);
         return f; 
     }
@@ -708,9 +709,9 @@ public class DashboardView {
         Stage popup = new Stage(); popup.initOwner(owner); popup.initStyle(StageStyle.UNDECORATED);
         VBox rootBox = new VBox(15); rootBox.setPadding(new Insets(25));
         rootBox.setStyle("-fx-background-color: -color-bg-panel; -fx-border-color: " + colorFuerte + "; -fx-border-width: 2; -fx-background-radius: 12; -fx-border-radius: 12;");
-        Label lblTit = new Label("🎙 Te escucho..."); lblTit.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -color-text-main;");
+        Label lblTit = new Label("🎙 Te escucho..."); lblTit.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -color-text-main; -fx-effect: null;");
         TextField txtComando = new TextField(); txtComando.setPromptText("Dicta tu comando..."); txtComando.setStyle("-fx-background-color: -color-bg-base; -fx-text-fill: -color-text-main; -fx-padding: 10;");
-        Button btnEjecutar = new Button("Procesar Comando"); btnEjecutar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 6;");
+        Button btnEjecutar = new Button("Procesar Comando"); btnEjecutar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 6; -fx-effect: null;");
         
         btnEjecutar.setOnAction(e -> {
             String c = txtComando.getText().toLowerCase();

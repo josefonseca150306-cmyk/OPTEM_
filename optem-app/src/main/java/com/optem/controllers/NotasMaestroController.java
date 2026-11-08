@@ -20,11 +20,15 @@ public class NotasMaestroController {
     private final String usuarioActual;
     private final Map<String, String> mapaColores = new HashMap<>();
     
-    private final String archivoNotas = "notas_docente.dat";
+    private final String archivoNotas;
 
     public NotasMaestroController() {
         Preferences p = Preferences.userNodeForPackage(DashboardView.class);
         this.usuarioActual = p.get("LAST_ACTIVE_ACCOUNT", "default");
+        
+        // Se genera un archivo de notas exclusivo para este maestro
+        String cuentaLimpia = this.usuarioActual.replaceAll("[^a-zA-Z0-9]", "_");
+        this.archivoNotas = "notas_maestro_" + cuentaLimpia + ".dat";
     }
 
     public static class ApunteDocenteDTO implements Serializable {
