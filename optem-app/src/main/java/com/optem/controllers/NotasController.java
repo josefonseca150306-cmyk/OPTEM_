@@ -20,9 +20,10 @@ public class NotasController {
 
     private final String usuarioActual;
     private final Map<String, String> mapaColores = new HashMap<>();
-    private final String[] coloresKeep = {"#F28B82", "#FBBC04", "#FFF475", "#CCFF90", "#A7FFEB", "#CBF0F8", "#AECBFA", "#D7AEFB", "#FDCFE8", "#E6C9A8"};
     
-    // Archivo donde se guardarán las notas localmente
+    // Paleta premium de colores pastel para notas tipo "Sticky Notes"
+    private final String[] coloresKeep = {"#FFADAD", "#FFD6A5", "#FDFFB6", "#CAFFBF", "#9BF6FF", "#A0C4FF", "#BDB2FF", "#FFC6FF"};
+    
     private final String archivoNotas = "mis_apuntes.dat";
 
     public NotasController() {
@@ -42,13 +43,12 @@ public class NotasController {
     public List<String> getMateriasDisponibles() {
         List<String> nombresMaterias = new ArrayList<>();
         
-        nombresMaterias.add("Nota personal");
-        nombresMaterias.add("Recordatorio");
+        nombresMaterias.add("Nota Personal");
+        nombresMaterias.add("Recordatorio Urgente");
         
-        mapaColores.put("Nota personal", "#90A4AE");
-        mapaColores.put("Recordatorio", "#FFB300");
+        mapaColores.put("Nota Personal", "#E0E0E0"); // Gris muy suave
+        mapaColores.put("Recordatorio Urgente", "#FFB4A2"); // Salmón suave
         
-        // CONEXIÓN CORREGIDA AL MOCKDB
         List< Map<String, String> > clases = MockDB.obtenerMateriasDelAlumno(usuarioActual);
         
         int colorIndex = 0;
@@ -66,7 +66,7 @@ public class NotasController {
     }
 
     public String getColorParaMateria(String materia) {
-        return mapaColores.getOrDefault(materia, "#ffffff");
+        return mapaColores.getOrDefault(materia, "#F8F9FA");
     }
 
     public void guardarApunte(String titulo, String materia, String contenido) {

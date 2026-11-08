@@ -29,28 +29,23 @@ public class MockDB {
     static {
         inicializarMapaCurricularOficial();
         
-        // Grupos iniciales simulando el semestre actual (5to Semestre - 2026B)
-        tablaGrupos.add(crearMateria("ISWK11", "Bases de Datos", "M. EN CCO. MARCELA CAMACHO", "S6", "LUNES 11:30 A 13:30 / MIERCOLES 11:30 A 13:30"));
-        tablaGrupos.add(crearMateria("ISWK12", "Innovación y Sustentabilidad", "M. EN ADM. TEC. DE INF. JOSE ESTEBAN", "SH", "LUNES 20:00 A 22:00 / MIERCOLES 20:00 A 22:00"));
-        tablaGrupos.add(crearMateria("ISWK13", "Programación Paralela", "I. EN T.I.C. JESUS MARES MONTES", "S5", "LUNES 09:00 A 11:00 / MIERCOLES 09:00 A 11:00"));
-        tablaGrupos.add(crearMateria("L40834", "Análisis y Diseño de Software", "DR. EN C. DE LA COMP. GRISELDA MATIAS", "S6", "MARTES 09:30 A 12:00 / JUEVES 09:30 A 12:00"));
-        tablaGrupos.add(crearMateria("L40851", "Redes y Telecomunicaciones", "ING. ISMAEL GONZALEZ DEL CAMPO", "S6", "MARTES 07:00 A 09:30 / JUEVES 07:00 A 09:30"));
+        // --- HORARIO OFICIAL UAEMÉX (Sexto Semestre) ---
+        tablaGrupos.add(crearMateria("ISWK11", "BASES DE DATOS", "M. EN CCO. MARCELA CAMACHO AVILA", "S6", "Lun 11:30-13:30 / Mié 11:30-13:30"));
+        tablaGrupos.add(crearMateria("ISWK12", "INNOVACION Y SUSTENTABILIDAD", "M. EN ADM. TEC. DE INF. JOSE ESTEBAN RUIZ MELO", "SH", "Lun 20:00-22:00 / Mié 20:00-22:00"));
+        tablaGrupos.add(crearMateria("ISWK13", "PROGRAMACION PARALELA", "I. EN T.I.C. JESUS MARES MONTES", "S5", "Lun 09:00-11:00 / Mié 09:00-11:00"));
+        tablaGrupos.add(crearMateria("LMU505", "INGLES 8", "L.E.I. ERIKA LIZBETH ALANIS CONTRERAS", "01", "Lun 17:00-19:00 / Mié 17:00-19:00"));
+        tablaGrupos.add(crearMateria("L40817", "METODOS Y MODELOS DE DESARROLLO DE SOFTWARE", "M. EN C.C. JOSE RAFAEL CRUZ REYES", "S6", "Mar 17:00-19:30 / Jue 17:00-19:30"));
+        tablaGrupos.add(crearMateria("L40834", "ANALISIS Y DISEÑO DE SOFTWARE", "DR. EN C. DE LA COMP. GRISELDA ARELI MATIAS MENDOZA", "S6", "Mar 09:30-12:00 / Jue 09:30-12:00"));
+        tablaGrupos.add(crearMateria("L40851", "REDES Y TELECOMUNICACIONES", "ING. ISMAEL GONZALEZ DEL CAMPO", "S6", "Mar 07:00-09:30 / Jue 07:00-09:30"));
+        tablaGrupos.add(crearMateria("L40853", "SIMULACION", "DR. EN C. DE LA COMP. YANET HERNANDEZ CASIMIRO", "S7", "Mar 15:00-16:30 / Jue 15:00-16:30"));
 
-        // Inscripciones iniciales simuladas para tu cuenta
-        Map<String, String> ins1 = new HashMap<>(); 
-        ins1.put("correo_alumno", CORREO_UNIVERSAL); 
-        ins1.put("clave_materia", "ISWK11"); 
-        tablaInscripciones.add(ins1);
-        
-        Map<String, String> ins2 = new HashMap<>(); 
-        ins2.put("correo_alumno", CORREO_UNIVERSAL); 
-        ins2.put("clave_materia", "L40834"); 
-        tablaInscripciones.add(ins2);
-        
-        Map<String, String> ins3 = new HashMap<>(); 
-        ins3.put("correo_alumno", CORREO_UNIVERSAL); 
-        ins3.put("clave_materia", "ISWK13"); 
-        tablaInscripciones.add(ins3);
+        // Inscripciones iniciales simuladas para tu cuenta (Las 8 materias)
+        for (Map<String, String> grupo : tablaGrupos) {
+            Map<String, String> ins = new HashMap<>(); 
+            ins.put("correo_alumno", CORREO_UNIVERSAL); 
+            ins.put("clave_materia", grupo.get("clave")); 
+            tablaInscripciones.add(ins);
+        }
 
         // --- INICIALIZAR DATOS DEL ADMINISTRADOR ---
         inicializarDatosAdmin();

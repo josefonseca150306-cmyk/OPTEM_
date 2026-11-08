@@ -20,7 +20,6 @@ public class NotasMaestroController {
     private final String usuarioActual;
     private final Map<String, String> mapaColores = new HashMap<>();
     
-    // Archivo de guardado EXCLUSIVO para el maestro
     private final String archivoNotas = "notas_docente.dat";
 
     public NotasMaestroController() {
@@ -37,7 +36,6 @@ public class NotasMaestroController {
         }
     }
 
-    // Lee los grupos reales ofertados en el MockDB
     public List<String> getGruposDisponibles() {
         List<String> grupos = new ArrayList<>();
         grupos.add("General / Ninguno");
@@ -55,12 +53,12 @@ public class NotasMaestroController {
         cat.add("Planeación de Clase");
         cat.add("Rúbrica de Evaluación");
         cat.add("Reunión de Academia");
-        cat.add("Nota Personal");
+        cat.add("Nota Personal Docente");
         
-        mapaColores.put("Planeación de Clase", "#AECBFA");
-        mapaColores.put("Rúbrica de Evaluación", "#F28B82");
-        mapaColores.put("Reunión de Academia", "#FFF475");
-        mapaColores.put("Nota Personal", "#CCFF90");
+        mapaColores.put("Planeación de Clase", "#A0C4FF");
+        mapaColores.put("Rúbrica de Evaluación", "#FFADAD");
+        mapaColores.put("Reunión de Academia", "#FDFFB6");
+        mapaColores.put("Nota Personal Docente", "#CAFFBF");
         return cat;
     }
 

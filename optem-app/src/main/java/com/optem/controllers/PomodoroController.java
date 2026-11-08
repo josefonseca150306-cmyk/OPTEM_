@@ -1,38 +1,39 @@
 package com.optem.controllers;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import com.optem.logic.ActividadManager;
 import com.optem.logic.NotificacionManager;
-import com.optem.models.Actividad;
+
+import javafx.application.Platform;
 
 public class PomodoroController {
 
-    private int tiempoTotalSegundos = 25 * 60; 
-    private int tiempoActualSegundos = tiempoTotalSegundos;
+    private int tiempoTotalSegundos; 
+    private int tiempoActualSegundos;
     private boolean enMarcha = false;
     private boolean esDescanso = false;
-    private Actividad tareaSeleccionada = null;
+    
+    // Tiempos por defecto para el alumno
+    private int minutosEnfoque = 25;
+    private int minutosDescanso = 5;
+
+    public PomodoroController() {
+        this.tiempoTotalSegundos = minutosEnfoque * 60;
+        this.tiempoActualSegundos = tiempoTotalSegundos;
+    }
+
+    public void configurarTiempos(int minutosEnf, int minutosDes) {
+        this.minutosEnfoque = minutosEnf;
+        this.minutosDescanso = minutosDes;
+        setModo(this.esDescanso); // Refrescar
+    }
 
     public void setModo(boolean descanso) {
         this.esDescanso = descanso;
-        this.tiempoTotalSegundos = descanso ? 5 * 60 : 25 * 60;
+        this.tiempoTotalSegundos = (descanso ? minutosDescanso : minutosEnfoque) * 60;
         resetearTemporizador();
     }
     
     public boolean isDescanso() {
         return esDescanso;
-    }
-
-    public void setTareaSeleccionada(Actividad tarea) {
-        this.tareaSeleccionada = tarea;
-    }
-
-    public List<Actividad> getTareasPendientes() {
-        return ActividadManager.getInstance().getAllActividades().stream()
-                .filter(a -> a.getEstado().equals("PENDIENTE") || a.getEstado().equals("EN_PROCESO"))
-                .collect(Collectors.toList());
     }
 
     public boolean alternarTemporizador() {
@@ -53,25 +54,27 @@ public class PomodoroController {
     public boolean tick() {
         if (tiempoActualSegundos > 0) {
             tiempoActualSegundos--;
-            return false;
+            return false; // Sigue corriendo
         } else {
             enMarcha = false;
             finalizarPomodoro();
-            return true; 
+            return true; // Terminó
         }
     }
     
+    public double getProgreso() {
+        if (tiempoTotalSegundos == 0) return 0;
+        return 1.0 - ((double) tiempoActualSegundos / tiempoTotalSegundos);
+    }
+    
     private void finalizarPomodoro() {
-        if (!esDescanso) {
-            if (tareaSeleccionada != null) {
-                ActividadManager.getInstance().actualizarEstadoActividad(tareaSeleccionada.getId(), "COMPLETADO");
-                NotificacionManager.mostrarNotificacion("🍅 Pomodoro Terminado", "¡Genial! Has completado la tarea: " + tareaSeleccionada.getNombre() + " (+50 XP)", "INFO");
+        Platform.runLater(() -> {
+            if (!esDescanso) {
+                NotificacionManager.mostrarNotificacion("🍅 ¡Tiempo de Enfoque Terminado!", "Gran trabajo. Tómate un respiro antes de continuar.", "INFO");
             } else {
-                NotificacionManager.mostrarNotificacion("🍅 Pomodoro Terminado", "Ciclo de estudio libre finalizado. ¡Buen trabajo!", "INFO");
+                NotificacionManager.mostrarNotificacion("☕ ¡Descanso Terminado!", "El receso acabó. Volvamos a la acción.", "INFO");
             }
-        } else {
-            NotificacionManager.mostrarNotificacion("☕ Descanso Terminado", "El tiempo de receso acabó. Es hora de volver al enfoque.", "INFO");
-        }
+        });
     }
 
     public String getTiempoFormateado() {

@@ -7,7 +7,6 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.prefs.Preferences;
 
@@ -122,24 +121,48 @@ public class AgendaView {
     // =========================================================================
     private List<Actividad> obtenerClasesOficialesComoActividades(LocalDate dia) {
         List<Actividad> clasesDelDia = new ArrayList<>();
-        String diaText = dia.format(DateTimeFormatter.ofPattern("EEEE", new Locale("es", "ES"))).toUpperCase();
+        
+        // CORRECCIÓN: Convierte el día de la semana actual al formato abreviado (Lun, Mar, etc.)
+        String diaCorto = "";
+        switch (dia.getDayOfWeek().getValue()) {
+            case 1: diaCorto = "Lun"; break;
+            case 2: diaCorto = "Mar"; break;
+            case 3: diaCorto = "Mié"; break;
+            case 4: diaCorto = "Jue"; break;
+            case 5: diaCorto = "Vie"; break;
+            case 6: diaCorto = "Sáb"; break;
+            case 7: diaCorto = "Dom"; break;
+        }
         
         List<Map<String,String>> misMaterias = MockDB.obtenerMateriasDelAlumno(correoActual);
         
         if (misMaterias != null) {
             for (Map<String, String> mat : misMaterias) {
-                String horario = mat.get("horario").toUpperCase();
-                if (horario.contains(diaText)) {
-                    String horaStr = "07:00"; 
-                    try {
-                        String parteDia = horario.substring(horario.indexOf(diaText));
-                        horaStr = parteDia.split(" ")[1];
-                    } catch (Exception e) {}
+                String horario = mat.get("horario"); // Ej: "Lun 11:30-13:30 / Mié 11:30-13:30"
+                
+                // Si el horario de esta materia contiene el día actual (ej. "Lun")
+                if (horario.contains(diaCorto)) {
                     
-                    LocalTime hora = LocalTime.of(Integer.parseInt(horaStr.split(":")[0]), Integer.parseInt(horaStr.split(":")[1]));
-                    Actividad act = new Actividad("CLASE_" + mat.get("clave"), "Clase: " + mat.get("nombre"), "Clase", "Horario Oficial: " + horario + "\nProfesor: " + mat.get("profesor"), dia, hora, mat.get("nombre"));
-                    act.setEstado("PENDIENTE");
-                    clasesDelDia.add(act);
+                    String[] partesHorario = horario.split("/");
+                    String horaInicioStr = "07:00"; 
+                    
+                    for (String parte : partesHorario) {
+                        if (parte.contains(diaCorto)) {
+                            try {
+                                String[] detalles = parte.trim().split(" ");
+                                String rangoHoras = detalles[1]; 
+                                horaInicioStr = rangoHoras.split("-")[0]; 
+                            } catch (Exception e) {}
+                            break;
+                        }
+                    }
+                    
+                    try {
+                        LocalTime hora = LocalTime.of(Integer.parseInt(horaInicioStr.split(":")[0]), Integer.parseInt(horaInicioStr.split(":")[1]));
+                        Actividad act = new Actividad("CLASE_" + mat.get("clave"), "Clase: " + mat.get("nombre"), "Clase", "Horario Oficial: " + horario + "\nProfesor: " + mat.get("profesor"), dia, hora, mat.get("nombre"));
+                        act.setEstado("PENDIENTE");
+                        clasesDelDia.add(act);
+                    } catch (Exception e) {}
                 }
             }
         }
@@ -232,7 +255,7 @@ public class AgendaView {
         pildoras.setHgap(8); pildoras.setVgap(8);
         pildoras.getChildren().addAll(
             crearPildoraFiltro("Todas"), 
-            crearPildoraFiltro("Clases"), // ¡Nuevo filtro!
+            crearPildoraFiltro("Clases"), 
             crearPildoraFiltro("Tareas"), 
             crearPildoraFiltro("Actividades"), 
             crearPildoraFiltro("Pendientes")
@@ -374,7 +397,6 @@ public class AgendaView {
         List<Actividad> actsPers = controller.getActividadesDelDia(dia, filtroActual);
         if (actsPers != null) actividades.addAll(actsPers);
         
-        // AGREGAR CLASES OFICIALES A LA VISTA
         if (filtroActual.equals("Todas") || filtroActual.equals("Clases")) {
             actividades.addAll(obtenerClasesOficialesComoActividades(dia));
         }
@@ -494,7 +516,6 @@ public class AgendaView {
                 boolean success = false;
                 if (db.hasString()) {
                     String id = db.getString();
-                    // Protege para no arrastrar clases oficiales
                     if (id.startsWith("CLASE_")) {
                         NotificacionManager.mostrarNotificacion("Acción Denegada", "No puedes reprogramar los horarios de tus clases oficiales.", "URGENTE");
                     } else {
@@ -648,7 +669,6 @@ public class AgendaView {
         gridTiempo.setHgap(30); gridTiempo.setVgap(10);
         gridTiempo.setStyle("-fx-background-color: " + colorBgBase + "; -fx-padding: 15; -fx-background-radius: 8;");
         
-        // ¡ARREGLO DEL TEXTO QUEMADO! (Se reemplazó "Hoy, 07:00 AM" por datos reales)
         String fechaRegistro = (act.getFecha() != null) ? act.getFecha().minusDays(1).toString() : "---";
         gridTiempo.add(crearInfoLabel("REGISTRO", fechaRegistro), 0, 0); 
         
