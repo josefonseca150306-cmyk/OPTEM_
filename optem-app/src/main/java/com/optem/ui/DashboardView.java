@@ -316,21 +316,26 @@ public class DashboardView {
         mainRoot.getChildren().addAll(appLayout, chatContainer, btnBurbujaIA);
         mainRoot.setStyle("-fx-background-color: -color-bg-base;");
 
-        Scene scene = new Scene(mainRoot, 1300, 850);
+        // --- FIX RESPONSIVIDAD: Calcula el tamaño según el monitor ---
+        Screen screen = Screen.getPrimary();
+        Rectangle2D bounds = screen.getVisualBounds();
+        
+        double prefWidth = Math.max(1024, bounds.getWidth() * 0.85);
+        double prefHeight = Math.max(768, bounds.getHeight() * 0.85);
+
+        Scene scene = new Scene(mainRoot, prefWidth, prefHeight);
         aplicarTemaGlobal(scene, correoUsuario);
         configurarNavegacionPorTecladoGlobal(scene, stage);
         stage.setScene(scene); 
         
         Platform.runLater(() -> { 
             if (!wasShowing) {
-                Screen screen = Screen.getPrimary(); 
-                Rectangle2D bounds = screen.getVisualBounds();
-                stage.setX(bounds.getMinX()); 
-                stage.setY(bounds.getMinY());
-                stage.setWidth(bounds.getWidth()); 
-                stage.setHeight(bounds.getHeight());
-                isMaximized = true;
-                btnMaxim.setText("🗗");
+                stage.setX(bounds.getMinX() + (bounds.getWidth() - prefWidth) / 2); 
+                stage.setY(bounds.getMinY() + (bounds.getHeight() - prefHeight) / 2);
+                stage.setWidth(prefWidth); 
+                stage.setHeight(prefHeight);
+                isMaximized = false;
+                btnMaxim.setText("🗖");
                 stage.show(); 
                 stage.toFront(); 
             } else {
@@ -578,18 +583,20 @@ public class DashboardView {
         );
     }
 
+    // --- FIX SOMBREADO: Agregado -fx-effect: null; al botón del menú ---
     private Button createMenuButton(String icon, String text) {
         Button btn = new Button(icon + "  " + text); btn.setId(text); btn.setUserData(icon); btn.setMaxWidth(Double.MAX_VALUE); btn.setAlignment(Pos.CENTER_LEFT);
-        btn.setStyle("-fx-background-color: transparent; -fx-text-fill: -color-text-muted; -fx-font-weight: 600; -fx-padding: 12 15; -fx-cursor: hand;");
+        btn.setStyle("-fx-background-color: transparent; -fx-text-fill: -color-text-muted; -fx-font-weight: 600; -fx-padding: 12 15; -fx-cursor: hand; -fx-effect: null;");
         
         btn.setOnMouseEntered(e -> { 
-            if (!btn.getStyleClass().contains("menu-btn-active")) btn.setStyle("-fx-background-color: rgba(128,128,128,0.1); -fx-text-fill: -color-text-main; -fx-font-weight: 600; -fx-padding: 12 15; -fx-cursor: hand; -fx-background-radius: 8;");
+            if (!btn.getStyleClass().contains("menu-btn-active")) btn.setStyle("-fx-background-color: rgba(128,128,128,0.1); -fx-text-fill: -color-text-main; -fx-font-weight: 600; -fx-padding: 12 15; -fx-cursor: hand; -fx-background-radius: 8; -fx-effect: null;");
         });
         
-        btn.setOnMouseExited(e -> { if (!btn.getStyleClass().contains("menu-btn-active")) btn.setStyle("-fx-background-color: transparent; -fx-text-fill: -color-text-muted; -fx-font-weight: 600; -fx-padding: 12 15; -fx-cursor: hand;"); });
+        btn.setOnMouseExited(e -> { if (!btn.getStyleClass().contains("menu-btn-active")) btn.setStyle("-fx-background-color: transparent; -fx-text-fill: -color-text-muted; -fx-font-weight: 600; -fx-padding: 12 15; -fx-cursor: hand; -fx-effect: null;"); });
         return btn;
     }
 
+    // --- FIX SOMBREADO: Agregado -fx-effect: null; a la selección del menú ---
     private void actualizarSeleccionMenu(Button botonSeleccionado) {
         Button[] botones = {btnInicio, btnAgenda, btnNotas, btnTareas, btnReuniones, btnActividades, btnGrupos, btnPomodoro, btnLogros, btnReinscripcion, btnAjustes, btnAdStats, btnAdPerfiles, btnAdDocs, btnAdIA, btnAdReinscripcion, btnAdConfig};
         String colorFuerte = controller.getColorFuerte();
@@ -598,8 +605,8 @@ public class DashboardView {
             b.getStyleClass().remove("menu-btn-active");
             if (b == botonSeleccionado) { 
                 b.getStyleClass().add("menu-btn-active");
-                b.setStyle("-fx-background-color: " + colorFuerte + "15; -fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold; -fx-padding: 12 15; -fx-background-radius: 8; -fx-cursor: default;");
-            } else { b.setStyle("-fx-background-color: transparent; -fx-text-fill: -color-text-muted; -fx-font-weight: 600; -fx-padding: 12 15; -fx-cursor: hand;"); }
+                b.setStyle("-fx-background-color: " + colorFuerte + "15; -fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold; -fx-padding: 12 15; -fx-background-radius: 8; -fx-cursor: default; -fx-effect: null;");
+            } else { b.setStyle("-fx-background-color: transparent; -fx-text-fill: -color-text-muted; -fx-font-weight: 600; -fx-padding: 12 15; -fx-cursor: hand; -fx-effect: null;"); }
         }
     }
 
