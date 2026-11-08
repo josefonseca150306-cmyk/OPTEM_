@@ -2,11 +2,14 @@ package com.optem.ui;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.prefs.Preferences;
 
 import com.optem.controllers.AjustesController;
 import com.optem.controllers.DashboardController;
+import com.optem.database.MockDB;
 import com.optem.logic.NotificacionManager;
 
 import javafx.geometry.Insets;
@@ -53,7 +56,7 @@ public class AgendaMaestroView {
         VBox titleBox = new VBox(5);
         Label titulo = new Label("📅 Agenda Docente");
         titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
-        Label subtitulo = new Label("Gestiona tus horarios, asesorías y cierres de actividades.");
+        Label subtitulo = new Label("Gestiona tus horarios, clases oficiales y actividades.");
         subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
         titleBox.getChildren().addAll(titulo, subtitulo);
 
@@ -105,6 +108,7 @@ public class AgendaMaestroView {
         colorBorder = isDark ? "#333333" : "#e2e8f0";
     }
 
+    // AHORA LEE EL MockDB EN VEZ DE USAR DATOS QUEMADOS
     private void actualizarVistaDiasYEventos() {
         selectorDias.getChildren().clear();
         for (int i = -3; i <= 3; i++) {
@@ -114,21 +118,35 @@ public class AgendaMaestroView {
 
         timelineContainer.getChildren().clear();
         
-        if (fechaSeleccionada.equals(LocalDate.now())) {
-            timelineContainer.getChildren().addAll(
-                crearEventoTimeline("07:00", "Clase: Bases de Datos Avanzadas", "Grupo S5 • Aula H-104", colorFuerte, "clase"),
-                crearEventoTimeline("10:00", "Reunión de Academia", "Plataforma Microsoft Teams", "#64748b", "reunion"),
-                crearEventoTimeline("13:00", "Clase: Ingeniería de Software", "Grupo S6 • Laboratorio 2", colorFuerte, "clase"),
-                crearEventoTimeline("16:30", "Asesoría: Daniela Sanchez", "Revisión de proyecto de titulación", "#3b82f6", "asesoria"),
-                crearEventoTimeline("23:59", "CIERRE DE ENTREGA: Práctica 3 - UML", "64 alumnos asignados. Las entregas se bloquearán a esta hora.", "#ef4444", "tarea")
-            );
-        } else if (fechaSeleccionada.isBefore(LocalDate.now())) {
-            timelineContainer.getChildren().addAll(
-                crearEventoTimeline("09:00", "Clase Anterior", "Clase ya impartida en este día.", "#10b981", "clase"),
-                crearEventoTimeline("14:00", "Asesoría Completada", "Se resolvió la duda del alumno.", "#10b981", "asesoria")
-            );
-        } else {
-            Label lblVacio = new Label("No hay eventos programados para este día aún.");
+        // Obtener el día de la semana actual en texto (LUNES, MARTES, etc.)
+        String diaActualText = fechaSeleccionada.format(DateTimeFormatter.ofPattern("EEEE", new Locale("es", "ES"))).toUpperCase();
+        
+        List<Map<String,String>> misClases = MockDB.obtenerTodosLosGrupos();
+        boolean encontroClases = false;
+
+        if (misClases != null) {
+            for (Map<String, String> clase : misClases) {
+                String horarioCompleto = clase.get("horario").toUpperCase();
+                
+                // Si el horario de la clase incluye la palabra "LUNES", "MARTES", etc.
+                if (horarioCompleto.contains(diaActualText)) {
+                    encontroClases = true;
+                    // Intenta extraer la hora (ej: "09:30") para mostrarla en el timeline
+                    String horaInicio = "07:00"; 
+                    try {
+                        String parteDia = horarioCompleto.substring(horarioCompleto.indexOf(diaActualText));
+                        horaInicio = parteDia.split(" ")[1]; 
+                    } catch (Exception ex) {}
+
+                    timelineContainer.getChildren().add(
+                        crearEventoTimeline(horaInicio, "Clase: " + clase.get("nombre"), "Grupo " + clase.get("grupo") + " • Horario: " + clase.get("horario"), colorFuerte, "clase")
+                    );
+                }
+            }
+        }
+
+        if (!encontroClases) {
+            Label lblVacio = new Label("No tienes clases oficiales programadas para este día.");
             lblVacio.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px; -fx-padding: 20;");
             timelineContainer.getChildren().add(lblVacio);
         }
@@ -321,15 +339,6 @@ public class AgendaMaestroView {
             NotificacionManager.mostrarNotificacion("¡Actividad Completada!", "Has ganado +50 XP. Revisa tu progreso en la pestaña de Logros.", "INFO");
             modal.close();
         });
-
-        if(tipo.equals("tarea")) {
-            btnCompletar.setText("Ir a calificar tareas");
-            btnCompletar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;");
-            btnCompletar.setOnAction(e -> {
-                NotificacionManager.mostrarNotificacion("Gestor de Tareas", "Redirigiendo al panel de calificación...", "INFO");
-                modal.close();
-            });
-        }
 
         botones.getChildren().addAll(btnCompletar);
         layout.getChildren().addAll(header, lblInfo, lblDesc, botones);

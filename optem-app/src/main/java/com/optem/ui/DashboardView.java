@@ -2,7 +2,6 @@ package com.optem.ui;
 
 import java.io.File;
 import java.io.InputStream;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +14,7 @@ import java.util.prefs.Preferences;
 
 import com.optem.controllers.AjustesController;
 import com.optem.controllers.DashboardController;
-import com.optem.logic.ActividadManager;
+import com.optem.database.MockDB;
 
 import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
@@ -216,15 +215,12 @@ public class DashboardView {
         else if (rol.equals("MAESTRO")) {
             btnInicio = createMenuButton("🏠", "Inicio"); btnInicio.setOnAction(e -> { root.setCenter(new InicioMaestroView().getView()); actualizarSeleccionMenu(btnInicio); });
             btnAgenda = createMenuButton("📅", "Mi Agenda"); btnAgenda.setOnAction(e -> { try { root.setCenter(new AgendaMaestroView().getView()); actualizarSeleccionMenu(btnAgenda); } catch(Exception ex) {} });
-            // Reemplaza la línea vieja del botón Notas por esta:
             btnNotas = createMenuButton("📝", "Cuaderno Docente"); 
             btnNotas.setOnAction(e -> { root.setCenter(new NotasMaestroView().getView()); actualizarSeleccionMenu(btnNotas); });
             
-            // 1. Actividades Personales del Maestro
             btnActividades = createMenuButton("✅", "Mis Actividades"); 
             btnActividades.setOnAction(e -> { root.setCenter(new ActividadesMaestroView().getView()); actualizarSeleccionMenu(btnActividades); });
             
-            // 2. Nueva Gestión de Tareas para los Alumnos
             btnTareas = createMenuButton("📤", "Asignar Tareas"); 
             btnTareas.setOnAction(e -> { root.setCenter(new TareasMaestroView().getView()); actualizarSeleccionMenu(btnTareas); });
             
@@ -234,7 +230,6 @@ public class DashboardView {
             btnLogros = createMenuButton("🏆", "Logros"); btnLogros.setOnAction(e -> { root.setCenter(new LogrosMaestroView().getView()); actualizarSeleccionMenu(btnLogros); });
             btnAjustes = createMenuButton("⚙", "Ajustes"); btnAjustes.setOnAction(e -> { root.setCenter(new AjustesView(themeUpdater, correoUsuario).getView()); actualizarSeleccionMenu(btnAjustes); });
 
-            // Agregamos btnActividades y btnTareas al menú
             menuButtonsBox.getChildren().addAll(btnInicio, btnAgenda, btnNotas, btnActividades, btnTareas, btnReuniones, btnGrupos, btnPomodoro, btnLogros, btnAjustes);
             btnInicio.fire();
         }
@@ -355,12 +350,17 @@ public class DashboardView {
         Map<String, String> perfil = controller.getPerfilUsuario();
         String primerNombre = perfil.get("nombre_completo").split(" ")[0];
         
-        int totalActividades = ActividadManager.getInstance().getActividadesDelDia(LocalDate.now()).size();
-        int actividadesHechas = 0;
-        for(com.optem.models.Actividad act : ActividadManager.getInstance().getActividadesDelDia(LocalDate.now())) {
-            if(act.isHecho()) actividadesHechas++;
-        }
-        double avanceReal = totalActividades > 0 ? (double)actividadesHechas / totalActividades : 0;
+        // --- NUEVA LÓGICA DE XP REAL ---
+        Preferences prefs = Preferences.userNodeForPackage(DashboardView.class);
+        int xpTotal = prefs.getInt("XP_USER_" + correoActualGlobal, 0);
+        
+        // Calculamos el nivel (cada 200 XP es un nivel)
+        int nivelActual = (xpTotal / 200) + 1;
+        int xpNivelBase = (nivelActual - 1) * 200;
+        int xpSiguienteNivel = nivelActual * 200;
+        
+        // Avance porcentual en el nivel actual
+        double avanceReal = (double) (xpTotal - xpNivelBase) / 200.0;
 
         StackPane bannerContainer = new StackPane(); bannerContainer.setPrefHeight(160); 
         Pane bannerBackground = new Pane(); 
@@ -380,7 +380,8 @@ public class DashboardView {
         xpBar.setPrefWidth(250); xpBar.setPrefHeight(8); 
         xpBar.setStyle("-fx-accent: " + colorFuerte + "; -fx-control-inner-background: rgba(255, 255, 255, 0.2);");
         
-        Label lblAvance = new Label("Progreso de actividades: " + actividadesHechas + " de " + totalActividades + " completadas");
+        // Mostramos el nivel y XP reales
+        Label lblAvance = new Label("Nivel " + nivelActual + " | " + xpTotal + " XP de " + xpSiguienteNivel + " XP");
         lblAvance.setStyle("-fx-font-size: 12px; -fx-text-fill: white; -fx-font-weight: bold;");
         progressBox.getChildren().addAll(xpBar, lblAvance);
 
@@ -416,37 +417,46 @@ public class DashboardView {
         lblMateriasTitle.getStyleClass().add("lbl-titulos-seccion");
 
         VBox listaTarjetas = new VBox(10);
-        List< Map < String , String >> clasesReal = controller.getClasesRegistradas();
+        // --- LEER MATERIAS REALES DEL MOCKDB PARA EL DASHBOARD ---
+        List< Map < String , String >> clasesReal = MockDB.obtenerMateriasDelAlumno(correoActualGlobal);
         
-        for (Map<String, String> clase : clasesReal) {
-            HBox classCard = new HBox(15); classCard.setAlignment(Pos.CENTER_LEFT);
-            classCard.setStyle("-fx-background-color: -color-bg-base; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: -color-border; -fx-border-radius: 10; -fx-border-width: 1px; -fx-cursor: hand;");
-            
-            StackPane iconPane = new StackPane(); Circle circle = new Circle(20, Color.web(colorFuerte, 0.15));
-            Label initial = new Label(clase.get("nombre").substring(0, 1)); initial.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: " + colorFuerte + ";");
-            iconPane.getChildren().addAll(circle, initial);
-            
-            VBox details = new VBox(3);
-            Label lblNom = new Label(clase.get("clave") + " - " + clase.get("nombre")); lblNom.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main;"); lblNom.getStyleClass().add("lbl-text-normal");
-            Label lblProf = new Label("👨‍🏫 " + clase.get("profesor")); lblProf.setStyle("-fx-text-fill: -color-text-muted;"); lblProf.getStyleClass().add("lbl-text-pequeno");
-            details.getChildren().addAll(lblNom, lblProf);
-            
-            Region spc = new Region(); HBox.setHgrow(spc, Priority.ALWAYS);
-            
-            String horarioRaw = clase.get("horario"); String[] partesHorario = horarioRaw.split("/"); String diasCompletos = partesHorario[0].split(" ")[0];
-            if (partesHorario.length > 1) diasCompletos += " Y " + partesHorario[1].trim().split(" ")[0]; 
-            
-            VBox timeBox = new VBox(3); timeBox.setAlignment(Pos.CENTER_RIGHT);
-            Label lblHorario = new Label(diasCompletos); lblHorario.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-background-color: " + colorFuerte + "15; -fx-padding: 4 8; -fx-background-radius: 6;"); lblHorario.getStyleClass().add("lbl-text-pequeno");
-            Label lblGrupo = new Label("Grupo: " + clase.get("grupo")); lblGrupo.setStyle("-fx-text-fill: -color-text-muted;"); lblGrupo.getStyleClass().add("lbl-text-pequeno");
-            timeBox.getChildren().addAll(lblHorario, lblGrupo);
-            
-            classCard.getChildren().addAll(iconPane, details, spc, timeBox);
-            classCard.setOnMouseEntered(e -> classCard.setStyle("-fx-background-color: -color-bg-panel; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: " + colorFuerte + "; -fx-border-radius: 10; -fx-border-width: 1px; -fx-cursor: hand;"));
-            classCard.setOnMouseExited(e -> classCard.setStyle("-fx-background-color: -color-bg-base; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: -color-border; -fx-border-radius: 10; -fx-border-width: 1px;"));
-            
-            classCard.setOnMouseClicked(e -> mostrarMuroTeams(clase, colorFuerte, parentStage));
-            listaTarjetas.getChildren().add(classCard);
+        if (clasesReal != null) {
+            for (Map<String, String> clase : clasesReal) {
+                HBox classCard = new HBox(15); classCard.setAlignment(Pos.CENTER_LEFT);
+                classCard.setStyle("-fx-background-color: -color-bg-base; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: -color-border; -fx-border-radius: 10; -fx-border-width: 1px; -fx-cursor: hand;");
+                
+                StackPane iconPane = new StackPane(); Circle circle = new Circle(20, Color.web(colorFuerte, 0.15));
+                Label initial = new Label(clase.get("nombre").substring(0, 1)); initial.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: " + colorFuerte + ";");
+                iconPane.getChildren().addAll(circle, initial);
+                
+                VBox details = new VBox(3);
+                Label lblNom = new Label(clase.get("clave") + " - " + clase.get("nombre")); lblNom.setStyle("-fx-font-weight: bold; -fx-text-fill: -color-text-main;"); lblNom.getStyleClass().add("lbl-text-normal");
+                Label lblProf = new Label("👨‍🏫 " + clase.get("profesor")); lblProf.setStyle("-fx-text-fill: -color-text-muted;"); lblProf.getStyleClass().add("lbl-text-pequeno");
+                details.getChildren().addAll(lblNom, lblProf);
+                
+                Region spc = new Region(); HBox.setHgrow(spc, Priority.ALWAYS);
+                
+                String horarioRaw = clase.get("horario"); 
+                // Evitamos un error si el horario viene diferente
+                String diasCompletos = horarioRaw;
+                if(horarioRaw.contains("/")) {
+                    String[] partesHorario = horarioRaw.split("/"); 
+                    diasCompletos = partesHorario[0].split(" ")[0];
+                    if (partesHorario.length > 1) diasCompletos += " Y " + partesHorario[1].trim().split(" ")[0]; 
+                }
+                
+                VBox timeBox = new VBox(3); timeBox.setAlignment(Pos.CENTER_RIGHT);
+                Label lblHorario = new Label(diasCompletos); lblHorario.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + "; -fx-background-color: " + colorFuerte + "15; -fx-padding: 4 8; -fx-background-radius: 6;"); lblHorario.getStyleClass().add("lbl-text-pequeno");
+                Label lblGrupo = new Label("Grupo: " + clase.get("grupo")); lblGrupo.setStyle("-fx-text-fill: -color-text-muted;"); lblGrupo.getStyleClass().add("lbl-text-pequeno");
+                timeBox.getChildren().addAll(lblHorario, lblGrupo);
+                
+                classCard.getChildren().addAll(iconPane, details, spc, timeBox);
+                classCard.setOnMouseEntered(e -> classCard.setStyle("-fx-background-color: -color-bg-panel; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: " + colorFuerte + "; -fx-border-radius: 10; -fx-border-width: 1px; -fx-cursor: hand;"));
+                classCard.setOnMouseExited(e -> classCard.setStyle("-fx-background-color: -color-bg-base; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: -color-border; -fx-border-radius: 10; -fx-border-width: 1px;"));
+                
+                classCard.setOnMouseClicked(e -> mostrarMuroTeams(clase, colorFuerte, parentStage));
+                listaTarjetas.getChildren().add(classCard);
+            }
         }
 
         materiasPane.getChildren().addAll(lblMateriasTitle, listaTarjetas);

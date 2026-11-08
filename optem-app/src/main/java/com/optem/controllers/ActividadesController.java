@@ -15,7 +15,7 @@ public class ActividadesController {
 
     public List<Actividad> getActividadesFiltradas(String categoria, String busqueda, String materia) {
         return manager.getAllActividades().stream()
-            .filter(act -> !"Tarea".equalsIgnoreCase(act.getTipo())) // Excluir académicas
+            .filter(act -> !"Tarea".equalsIgnoreCase(act.getTipo()))
             .filter(act -> categoria == null || categoria.equals("Todas") || act.getTipo().equals(categoria))
             .filter(act -> busqueda == null || busqueda.isEmpty() || act.getNombre().toLowerCase().contains(busqueda.toLowerCase()))
             .filter(act -> materia == null || materia.equals("Todas") || act.getMateria().equals("General") || act.getMateria().equals(materia))

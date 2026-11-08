@@ -2,12 +2,16 @@ package com.optem.ui;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 import com.optem.controllers.AjustesController;
 import com.optem.controllers.DashboardController;
+import com.optem.controllers.TareasMaestroController;
+import com.optem.database.MockDB;
 import com.optem.logic.NotificacionManager;
 
 import javafx.animation.Animation;
@@ -37,6 +41,7 @@ import javafx.util.Duration;
 public class InicioMaestroView {
 
     private final DashboardController controller = new DashboardController();
+    private final TareasMaestroController tareasController = new TareasMaestroController(); // NUEVO CONTROLLER
     private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder;
 
     public VBox getView() {
@@ -85,13 +90,21 @@ public class InicioMaestroView {
         bannerContainer.getChildren().addAll(bannerBackground, topBannerContent);
         bannerContainer.setEffect(new DropShadow(15, 0, 8, Color.rgb(0,0,0,0.15)));
 
+        // --- CONECTANDO LAS MÉTRICAS ---
+        List<Map<String,String>> misClases = MockDB.obtenerTodosLosGrupos();
+        int totalAlumnos = (misClases != null) ? misClases.size() * 25 : 0; // Aproximamos 25 alumnos por grupo oficial
+        
+        long tareasPendientes = tareasController.getTodasLasAsignaciones().stream()
+                .filter(t -> t.get("estado").equals("ABIERTA"))
+                .count();
+
         HBox metricasBox = new HBox(20);
         metricasBox.setAlignment(Pos.CENTER);
         
         metricasBox.getChildren().addAll(
-            crearTarjetaMetrica("👥", "Total de Alumnos", "64 inscritos", colorFuerte),
-            crearTarjetaMetrica("📝", "Tareas por Revisar", "14 pendientes", "#D32F2F"),
-            crearTarjetaMetrica("📅", "Próxima Clase", "13:00 - Ing. Software", "#f59e0b")
+            crearTarjetaMetrica("👥", "Total de Alumnos", totalAlumnos + " inscritos", colorFuerte),
+            crearTarjetaMetrica("📝", "Asignaciones Activas", tareasPendientes + " abiertas", "#D32F2F"),
+            crearTarjetaMetrica("📅", "Próxima Clase", "Revisar Agenda", "#f59e0b")
         );
 
         VBox materiasPane = new VBox(15); 
@@ -102,11 +115,19 @@ public class InicioMaestroView {
 
         VBox listaTarjetas = new VBox(10);
         
-        listaTarjetas.getChildren().addAll(
-            crearFilaClaseMaestro("Ingeniería de Software", "ISW-101", "Lunes y Miércoles 13:00 - 15:00", "Grupo: S6", 24),
-            crearFilaClaseMaestro("Bases de Datos Avanzadas", "BDA-202", "Martes y Jueves 07:00 - 09:00", "Grupo: S5", 18),
-            crearFilaClaseMaestro("Desarrollo Web Integrado", "DWI-303", "Viernes 10:00 - 14:00", "Grupo: S6", 22)
-        );
+        // --- CONECTANDO CLASES AL MOCKDB ---
+        if (misClases != null && !misClases.isEmpty()) {
+            for (Map<String, String> clase : misClases) {
+                // Estimamos 25 inscritos como demo visual, en un entorno real sería una consulta a DB
+                listaTarjetas.getChildren().add(
+                    crearFilaClaseMaestro(clase.get("nombre"), clase.get("clave"), clase.get("horario"), "Grupo: " + clase.get("grupo"), 25)
+                );
+            }
+        } else {
+            Label vacio = new Label("No tienes clases asignadas este semestre.");
+            vacio.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-style: italic;");
+            listaTarjetas.getChildren().add(vacio);
+        }
 
         materiasPane.getChildren().addAll(lblMateriasTitle, listaTarjetas);
 
@@ -186,7 +207,7 @@ public class InicioMaestroView {
         VBox details = new VBox(3);
         Label lblNom = new Label(clave + " - " + nombreMateria); 
         lblNom.setStyle("-fx-font-weight: bold; -fx-font-size: 1.1em; -fx-text-fill: " + colorTextMain + ";"); 
-        Label lblAlumnos = new Label("👥 Clic para ver detalles y " + inscritos + " alumnos"); 
+        Label lblAlumnos = new Label("👥 Clic para ver estatus de tareas y alumnos"); 
         lblAlumnos.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 0.85em;");
         details.getChildren().addAll(lblNom, lblAlumnos);
         
@@ -227,9 +248,9 @@ public class InicioMaestroView {
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
         VBox titulos = new VBox(2);
-        Label lblTit = new Label("Panel de Control: " + materia);
+        Label lblTit = new Label("Control: " + materia);
         lblTit.setStyle("-fx-font-weight: bold; -fx-font-size: 1.4em; -fx-text-fill: " + colorTextMain + ";");
-        Label lblSub = new Label(grupo + " | " + inscritos + " Alumnos Activos");
+        Label lblSub = new Label(grupo + " | Alumnos Activos");
         lblSub.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 0.9em;");
         titulos.getChildren().addAll(lblTit, lblSub);
         
@@ -243,28 +264,49 @@ public class InicioMaestroView {
         
         VBox colTareas = new VBox(15);
         colTareas.setPrefWidth(300);
-        Label lblTareasTit = new Label("📊 Estado de Tareas Asignadas");
+        Label lblTareasTit = new Label("📊 Tareas publicadas en este grupo");
         lblTareasTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 1.1em;");
+        colTareas.getChildren().add(lblTareasTit);
         
-        colTareas.getChildren().addAll(
-            lblTareasTit,
-            crearMétricaTarea("Práctica 1 - UML", 24, 24, "#10b981"),
-            crearMétricaTarea("Investigación Patrones", 20, 24, colorFuerte),
-            crearMétricaTarea("Proyecto Final (Avance)", 5, 24, "#f59e0b")
-        );
+        // --- CONECTAMOS LAS TAREAS REALES DE ESTA MATERIA ---
+        List<Map<String,String>> tareasDeEstaMateria = tareasController.getTodasLasAsignaciones().stream()
+                .filter(t -> t.get("materia").contains(materia))
+                .collect(Collectors.toList());
+                
+        if (tareasDeEstaMateria.isEmpty()) {
+            Label vacio = new Label("No has publicado tareas aquí.");
+            vacio.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-style: italic;");
+            colTareas.getChildren().add(vacio);
+        } else {
+            for (Map<String, String> t : tareasDeEstaMateria) {
+                int actuales = Integer.parseInt(t.get("entregas_actuales"));
+                int tot = Integer.parseInt(t.get("entregas_total"));
+                colTareas.getChildren().add(crearMétricaTarea(t.get("titulo"), actuales, tot, colorFuerte));
+            }
+        }
 
         VBox colAlumnos = new VBox(10);
         colAlumnos.setPrefWidth(280);
-        Label lblAlumnosTit = new Label("👥 Lista de Alumnos (Muestra)");
+        Label lblAlumnosTit = new Label("👥 Registro de Últimas Entregas");
         lblAlumnosTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 1.1em;");
         
         VBox lista = new VBox(8);
-        lista.getChildren().addAll(
-            crearItemAlumno("Jose Antonio Fonseca", "Entregó todo", "#10b981"),
-            crearItemAlumno("Daniela Sanchez", "Falta 1 tarea", "#f59e0b"),
-            crearItemAlumno("Alexis Hernandez", "Entregó todo", "#10b981"),
-            crearItemAlumno("Mauricio Gomez", "En riesgo", "#D32F2F")
-        );
+        
+        // --- CONECTAMOS A LOS ALUMNOS QUE HAN ENTREGADO TAREAS REALES ---
+        boolean hayEntregas = false;
+        for (Map<String, String> t : tareasDeEstaMateria) {
+            List<Map<String,String>> entregas = tareasController.obtenerEntregasDeTarea(t.get("id"));
+            for (Map<String, String> e : entregas) {
+                lista.getChildren().add(crearItemAlumno(e.get("alumno"), "Entregó: " + t.get("titulo"), "#10b981"));
+                hayEntregas = true;
+            }
+        }
+        
+        if(!hayEntregas) {
+             Label vacio = new Label("Nadie ha entregado tareas aún.");
+             vacio.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-style: italic;");
+             lista.getChildren().add(vacio);
+        }
         
         ScrollPane scrollAlumnos = new ScrollPane(lista);
         scrollAlumnos.setPrefHeight(150);
@@ -276,20 +318,14 @@ public class InicioMaestroView {
         HBox footer = new HBox(15);
         footer.setAlignment(Pos.CENTER_RIGHT);
         
-        Button btnLista = new Button("📝 Pasar Lista");
-        btnLista.setStyle("-fx-background-color: " + colorBgBase + "; -fx-border-color: " + colorBorder + "; -fx-text-fill: " + colorTextMain + "; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 6; -fx-border-radius: 6; -fx-cursor: hand;");
-        btnLista.setOnAction(e -> {
-            NotificacionManager.mostrarNotificacion("Asistencia Registrada", "Se ha pasado lista exitosamente para los " + inscritos + " alumnos del grupo " + grupo + ".", "INFO");
-        });
-        
         Button btnCalificar = new Button("✏️ Calificar Entregas");
         btnCalificar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 6; -fx-cursor: hand;");
         btnCalificar.setOnAction(e -> {
             modal.close();
-            NotificacionManager.mostrarNotificacion("Gestor de Tareas", "Redirigiendo al módulo de Calificación para " + materia + "...", "INFO");
+            NotificacionManager.mostrarNotificacion("Gestor de Tareas", "Redirigiendo al módulo de Asignaciones...", "INFO");
         });
         
-        footer.getChildren().addAll(btnLista, btnCalificar);
+        footer.getChildren().add(btnCalificar);
 
         layout.getChildren().addAll(header, contenido, footer);
         
@@ -312,7 +348,7 @@ public class InicioMaestroView {
         lblStat.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-weight: bold; -fx-font-size: 0.9em;");
         top.getChildren().addAll(lblNom, sp, lblStat);
         
-        ProgressBar pb = new ProgressBar((double)entregas/total);
+        ProgressBar pb = new ProgressBar(total == 0 ? 0 : (double)entregas/total);
         pb.setMaxWidth(Double.MAX_VALUE);
         pb.setStyle("-fx-accent: " + colorBarra + "; -fx-control-inner-background: " + colorBgBase + ";");
         

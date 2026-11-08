@@ -3,7 +3,9 @@ package com.optem.models;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-public class Actividad {
+public class Actividad implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String id;
     private String nombre;
     private String tipo;

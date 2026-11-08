@@ -1,12 +1,14 @@
 package com.optem.ui;
 
-import com.optem.controllers.AdminController;
-import com.optem.controllers.ReinscripcionController;
-import com.optem.logic.NotificacionManager;
+import java.awt.Desktop;
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
+
+import com.optem.controllers.ReinscripcionController;
+import com.optem.logic.NotificacionManager;
 
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -24,26 +26,22 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.RowConstraints;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 
 public class ReinscripcionView extends BorderPane {
 
-    private final AdminController adminController = new AdminController();
     private final ReinscripcionController controller = new ReinscripcionController();
 
-    private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder, correoActual;
+    private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder, correoActual, nombreActual, fontSizeActual;
     private final Map<String, ComboBox<String>> combosMaterias = new HashMap<>();
     private GridPane gridHorario;
     private boolean existeEmpalme = false;
-    private boolean yaEstaInscrito = false;
 
     public ReinscripcionView() {
         leerPreferencias();
         this.setPadding(new Insets(20, 30, 20, 30));
-        this.setStyle("-fx-background-color: transparent;");
+        this.setStyle("-fx-background-color: transparent; -fx-font-size: " + fontSizeActual + ";");
 
         BorderPane header = new BorderPane();
         VBox titleBox = new VBox(5);
@@ -51,35 +49,23 @@ public class ReinscripcionView extends BorderPane {
         Label titulo = new Label("Reinscripción ISW (6to Semestre)");
         titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
         
-        Label subtitulo = new Label("Arma tu horario. Cuidado con los empalmes.");
+        Label subtitulo = new Label("Arma tu horario inteligente y recibe tu hoja de pago.");
         subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
         
         titleBox.getChildren().addAll(titulo, subtitulo);
         header.setLeft(titleBox);
-
-        Button btnLimpiar = new Button("🗑 Borrar Horario");
-        btnLimpiar.setStyle("-fx-background-color: transparent; -fx-border-color: #D32F2F; -fx-text-fill: #D32F2F; -fx-border-radius: 8; -fx-cursor: hand; -fx-font-weight: bold; -fx-padding: 8 15;");
-        btnLimpiar.setOnAction(e -> {
-            for (ComboBox<String> combo : combosMaterias.values()) {
-                combo.getSelectionModel().select(0);
-            }
-            repintarHorario();
-            NotificacionManager.mostrarNotificacion("Limpieza", "El horario ha sido reiniciado.", "INFO");
-        });
-        header.setRight(btnLimpiar);
-        BorderPane.setAlignment(btnLimpiar, Pos.CENTER_RIGHT);
-
         this.setTop(header);
         BorderPane.setMargin(header, new Insets(0, 0, 20, 0));
 
         Preferences prefsGlobales = Preferences.userRoot().node("optem_erp_global");
         boolean periodoAbierto = prefsGlobales.getBoolean("REINSCRIPCION_ABIERTA", false);
-        yaEstaInscrito = prefsGlobales.getBoolean("YA_INSCRITO_" + correoActual, false);
+        
+        Map<String, String> estadoMiInscripcion = controller.verificarEstadoInscripcion(correoActual);
 
         if (!periodoAbierto) {
             mostrarPantallaCerrada("El periodo de reinscripción se encuentra CERRADO."); 
-        } else if (yaEstaInscrito) {
-            mostrarPantallaCerrada("¡Ya estás inscrito en este periodo escolar! Verifica tu Inicio.");
+        } else if (estadoMiInscripcion != null) {
+            mostrarPantallaEstado(estadoMiInscripcion);
         } else {
             construirPantallaInscripcion(); 
         }
@@ -107,11 +93,6 @@ public class ReinscripcionView extends BorderPane {
             if(m.categoria.equals("REZAGO")) listaMaterias.getChildren().add(crearCardMateria(m));
         }
 
-        listaMaterias.getChildren().add(crearTituloSeccion("🚀 Adelantar Materias (Semestres Pares)"));
-        for (ReinscripcionController.MateriaDTO m : controller.getMateriasDisponibles()) {
-            if(m.categoria.equals("ADELANTO")) listaMaterias.getChildren().add(crearCardMateria(m));
-        }
-
         ScrollPane scrollMaterias = new ScrollPane(listaMaterias);
         scrollMaterias.setFitToWidth(true);
         scrollMaterias.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
@@ -120,12 +101,12 @@ public class ReinscripcionView extends BorderPane {
         Button btnInscribir = new Button("Validar e Inscribir Horario");
         btnInscribir.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 12; -fx-background-radius: 8; -fx-cursor: hand;");
         btnInscribir.setMaxWidth(Double.MAX_VALUE);
+        
         btnInscribir.setOnAction(e -> {
             if (existeEmpalme) {
-                NotificacionManager.mostrarNotificacion("❌ Error de Validación", "No puedes inscribirte. Tienes materias chocando en el mismo horario.", "URGENTE");
+                NotificacionManager.mostrarNotificacion("❌ Error de Validación", "Tienes materias chocando en el mismo horario.", "URGENTE");
             } else {
                 guardarInscripcionOficial();
-                mostrarAlertaHojaPago();
             }
         });
 
@@ -142,14 +123,7 @@ public class ReinscripcionView extends BorderPane {
         Label lblIA = new Label("🤖 Auto-IA:");
         lblIA.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorFuerte + ";");
         
-        panelIA.getChildren().addAll(
-            lblIA,
-            crearBotonIA("Matutino", "MATUTINO"),
-            crearBotonIA("Mañanas Libres", "TARDES"),
-            crearBotonIA("Fines Largos", "SIN_VIERNES"),
-            crearBotonIA("Con Adelanto", "CON_ADELANTO"),
-            crearBotonIA("Con Rezago", "CON_REZAGO")
-        );
+        panelIA.getChildren().addAll(lblIA, crearBotonIA("Matutino", "MATUTINO"), crearBotonIA("Mañanas Libres", "TARDES"));
 
         VBox contCalendario = new VBox(10);
         contCalendario.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 12; -fx-padding: 15; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12;");
@@ -188,7 +162,7 @@ public class ReinscripcionView extends BorderPane {
         colDer.getChildren().addAll(panelIA, contCalendario);
 
         body.getChildren().addAll(colIzq, colDer);
-        layoutVertical.getChildren().addAll(body, crearMapaCurricularInteractivo());
+        layoutVertical.getChildren().add(body);
         
         ScrollPane scrollGlobal = new ScrollPane(layoutVertical);
         scrollGlobal.setFitToWidth(true);
@@ -198,14 +172,12 @@ public class ReinscripcionView extends BorderPane {
         repintarHorario();
     }
     
-    // MÉTODO QUE GUARDA EN EL MOCK DB Y MARCA LA INSCRIPCIÓN COMO REALIZADA
     private void guardarInscripcionOficial() {
         int materiasInscritas = 0;
         for (Map.Entry<String, ComboBox<String>> entry : combosMaterias.entrySet()) {
             String materia = entry.getKey();
             String seleccion = entry.getValue().getValue();
             
-            // Si el alumno escogió un horario válido (no la opción de "no cursar")
             if (seleccion != null && !seleccion.contains("— No cursar —")) {
                 controller.inscribirAlumnoMateria(correoActual, materia);
                 materiasInscritas++;
@@ -213,16 +185,76 @@ public class ReinscripcionView extends BorderPane {
         }
         
         if (materiasInscritas > 0) {
-            Preferences prefsGlobales = Preferences.userRoot().node("optem_erp_global");
-            prefsGlobales.putBoolean("YA_INSCRITO_" + correoActual, true);
+            controller.registrarSolicitudCompleta(correoActual, nombreActual);
+            
+            Map<String, String> mockEstado = new HashMap<>();
+            mockEstado.put("estado", "PENDIENTE DE PAGO");
+            mostrarPantallaEstado(mockEstado);
+            NotificacionManager.mostrarNotificacion("Enviado", "Horario validado. En espera de hoja de pago.", "INFO");
         } else {
-            NotificacionManager.mostrarNotificacion("Advertencia", "No has seleccionado ninguna materia para inscribir.", "URGENTE");
+            NotificacionManager.mostrarNotificacion("Advertencia", "No seleccionaste ninguna materia.", "URGENTE");
         }
+    }
+
+    private void mostrarPantallaEstado(Map<String, String> estado) {
+        VBox panelCentral = new VBox(20);
+        panelCentral.setAlignment(Pos.CENTER);
+        panelCentral.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-padding: 50; -fx-border-color: " + colorFuerte + "; -fx-border-width: 2; -fx-border-radius: 20; -fx-background-radius: 20;");
+        
+        boolean yaEnviada = estado.get("estado").equals("HOJA ENVIADA");
+
+        Label lblIcono = new Label(yaEnviada ? "📄" : "⏳");
+        lblIcono.setStyle("-fx-font-size: 70px; -fx-font-family: 'Segoe UI Emoji'; -fx-text-fill: " + colorTextMain + ";");
+        
+        Label lblMensaje = new Label(yaEnviada ? "¡Tu hoja de pago está lista!" : "Horario validado y enviado.");
+        lblMensaje.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
+        
+        Label lblSub = new Label(yaEnviada ? "Descarga el archivo PDF adjunto para realizar tu pago bancario." : "Administración está validando tus datos para generar tu hoja de pago.");
+        lblSub.setStyle("-fx-text-fill: " + colorTextMuted + ";");
+
+        panelCentral.getChildren().addAll(lblIcono, lblMensaje, lblSub);
+
+        if (yaEnviada) {
+            Button btnDescargar = new Button("📥 Descargar Hoja de Pago (PDF)");
+            btnDescargar.setStyle("-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 12 30; -fx-background-radius: 8; -fx-cursor: hand;");
+            
+            btnDescargar.setOnAction(e -> {
+                try {
+                    File file = new File(estado.get("ruta_hoja_pago"));
+                    if (file.exists()) Desktop.getDesktop().open(file);
+                    else NotificacionManager.mostrarNotificacion("Error", "El documento no se encuentra en el servidor.", "ERROR");
+                } catch (Exception ex) {}
+            });
+            
+            panelCentral.getChildren().add(btnDescargar);
+        }
+
+        VBox centerWrap = new VBox(panelCentral);
+        centerWrap.setAlignment(Pos.CENTER);
+        this.setCenter(centerWrap);
+    }
+
+    private void mostrarPantallaCerrada(String mensaje) {
+        VBox panelCerrado = new VBox(20);
+        panelCerrado.setAlignment(Pos.CENTER);
+        panelCerrado.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-padding: 50; -fx-border-color: #D32F2F; -fx-border-width: 2; -fx-border-radius: 20; -fx-background-radius: 20;");
+        
+        Label lblIcono = new Label("🔒");
+        lblIcono.setStyle("-fx-font-size: 70px; -fx-font-family: 'Segoe UI Emoji';");
+        
+        Label lblMensaje = new Label(mensaje);
+        lblMensaje.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #D32F2F;");
+        
+        panelCerrado.getChildren().addAll(lblIcono, lblMensaje);
+        
+        VBox centerWrap = new VBox(panelCerrado);
+        centerWrap.setAlignment(Pos.CENTER);
+        this.setCenter(centerWrap);
     }
 
     private Label crearTituloSeccion(String texto) {
         Label lbl = new Label(texto);
-        lbl.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: " + colorTextMain + "; -fx-padding: 10 0 5 0; -fx-border-color: " + colorBorder + "; -fx-border-width: 0 0 1 0;");
+        lbl.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-padding: 10 0 5 0; -fx-border-color: " + colorBorder + "; -fx-border-width: 0 0 1 0;");
         lbl.setMaxWidth(Double.MAX_VALUE);
         return lbl;
     }
@@ -233,15 +265,12 @@ public class ReinscripcionView extends BorderPane {
         card.setStyle("-fx-border-color: " + m.colorBorde + "; -fx-border-width: 0 0 0 4; -fx-background-color: " + colorBgBase + "; -fx-background-radius: 0 6 6 0;");
 
         Label lblNom = new Label(m.titulo);
-        lblNom.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 12px;");
+        lblNom.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
         
-        Label lblCred = new Label(m.creditos + (m.mixta ? " • Opción en Línea" : ""));
-        lblCred.setStyle("-fx-font-size: 10px; -fx-text-fill: " + colorTextMuted + ";");
-
         ComboBox<String> cmbGrupos = new ComboBox<>();
         cmbGrupos.getItems().addAll(m.opciones);
         cmbGrupos.getSelectionModel().selectFirst();
-        cmbGrupos.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 4; -fx-font-size: 11px;");
+        cmbGrupos.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorBorder + "; -fx-border-radius: 4;");
         cmbGrupos.setMaxWidth(Double.MAX_VALUE);
         
         cmbGrupos.setCellFactory(lv -> new ListCell<String>() {
@@ -263,13 +292,13 @@ public class ReinscripcionView extends BorderPane {
 
         cmbGrupos.setOnAction(e -> repintarHorario());
         combosMaterias.put(m.titulo, cmbGrupos);
-        card.getChildren().addAll(lblNom, lblCred, cmbGrupos);
+        card.getChildren().addAll(lblNom, cmbGrupos);
         return card;
     }
 
     private Button crearBotonIA(String texto, String perfil) {
         Button btn = new Button(texto);
-        btn.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorFuerte + "; -fx-border-radius: 6; -fx-text-fill: " + colorTextMain + "; -fx-cursor: hand; -fx-font-size: 11px;");
+        btn.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorFuerte + "; -fx-border-radius: 6; -fx-text-fill: " + colorTextMain + "; -fx-cursor: hand;");
         btn.setOnAction(e -> {
             for (ComboBox<String> combo : combosMaterias.values()) combo.getSelectionModel().select(0);
             
@@ -298,7 +327,6 @@ public class ReinscripcionView extends BorderPane {
         }
 
         boolean[][] ocupacion = new boolean[7][15]; 
-        boolean mostroNotificacion = false;
 
         for (ReinscripcionController.MateriaDTO m : controller.getMateriasDisponibles()) {
             ComboBox<String> combo = combosMaterias.get(m.titulo);
@@ -322,14 +350,9 @@ public class ReinscripcionView extends BorderPane {
                 tarjetaClase.setPadding(new Insets(2));
                 
                 if (hayEmpalmeLocal) {
-                    tarjetaClase.setStyle("-fx-background-color: #ffe6e6; -fx-border-color: #D32F2F; -fx-border-width: 2; -fx-background-radius: 6; -fx-border-radius: 6;");
+                    tarjetaClase.setStyle("-fx-background-color: #ffe6e6; -fx-border-color: #D32F2F; -fx-border-width: 2; -fx-background-radius: 6;");
                     Label lblN = new Label("¡EMPALME!"); lblN.setStyle("-fx-text-fill: #D32F2F; -fx-font-weight: bold; -fx-font-size: 10px;");
                     tarjetaClase.getChildren().add(lblN);
-                    
-                    if(!mostroNotificacion) {
-                        NotificacionManager.mostrarNotificacion("⚠️ Horario Ocupado", "Las materias seleccionadas chocan en el mismo día y hora.", "URGENTE");
-                        mostroNotificacion = true;
-                    }
                 } else {
                     tarjetaClase.setStyle("-fx-background-color: " + b.colorHex + "30; -fx-border-color: " + b.colorHex + "; -fx-border-width: 0 0 0 4; -fx-background-radius: 4;");
                     Label lblN = new Label(b.texto); lblN.setStyle("-fx-text-fill: " + colorTextMain + "; -fx-font-weight: bold; -fx-font-size: 9px; -fx-alignment: center; -fx-text-alignment: center; -fx-wrap-text: true;");
@@ -343,148 +366,20 @@ public class ReinscripcionView extends BorderPane {
         }
     }
     
-    private void mostrarAlertaHojaPago() {
-        VBox alertBox = new VBox(15);
-        alertBox.setAlignment(Pos.CENTER);
-        alertBox.setPadding(new Insets(20));
-        alertBox.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorFuerte + "; -fx-border-width: 2; -fx-border-radius: 12; -fx-background-radius: 12;");
-
-        Label icon = new Label("📧"); icon.setStyle("-fx-font-size: 40px; -fx-font-family: 'Segoe UI Emoji';");
-        Label title = new Label("¡Reinscripción Exitosa!"); title.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: " + colorTextMain + ";");
-        Label msg = new Label("Las materias se han guardado en tu sistema y ya aparecen en tu Inicio.\nTu hoja de referencia para pago llegará a tu correo institucional.");
-        msg.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-wrap-text: true; -fx-text-alignment: center;");
-        
-        Button btnOk = new Button("Ir a mi Inicio");
-        btnOk.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
-        
-        alertBox.getChildren().addAll(icon, title, msg, btnOk);
-        
-        javafx.stage.Stage popup = new javafx.stage.Stage();
-        popup.initStyle(javafx.stage.StageStyle.TRANSPARENT);
-        btnOk.setOnAction(e -> {
-            popup.close();
-            // Al dar clic, bloquea la pantalla de reinscripción por completo
-            mostrarPantallaCerrada("¡Ya estás inscrito en este periodo escolar! Verifica tu Inicio.");
-        });
-        
-        javafx.scene.Scene scene = new javafx.scene.Scene(alertBox);
-        scene.setFill(Color.TRANSPARENT);
-        popup.setScene(scene);
-        popup.show();
-    }
-
-    private VBox crearMapaCurricularInteractivo() {
-        VBox mapaContainer = new VBox(15);
-        mapaContainer.setPadding(new Insets(20));
-        mapaContainer.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-background-radius: 12; -fx-border-color: " + colorBorder + "; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 4);");
-
-        HBox topLegends = new HBox(20);
-        topLegends.setAlignment(Pos.CENTER);
-        Label lblMapTit = new Label("Trayectoria ideal INGENIERO EN SOFTWARE (ISW-F16)");
-        lblMapTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 14px;");
-        
-        HBox boxSimbologia = new HBox(15);
-        boxSimbologia.setAlignment(Pos.CENTER);
-        boxSimbologia.getChildren().addAll(
-            crearEtiquetaSimbologia("Acreditada", "#008000"), 
-            crearEtiquetaSimbologia("Inscrita", "#8BC34A"),   
-            crearEtiquetaSimbologia("Pendiente", "transparent", colorBorder)
-        );
-
-        topLegends.getChildren().addAll(lblMapTit, new Region(), boxSimbologia);
-        HBox.setHgrow(topLegends.getChildren().get(1), Priority.ALWAYS);
-
-        HBox malla = new HBox(15);
-        malla.setPadding(new Insets(10));
-
-        // BUCLE LIMPIO: Lee los datos directamente del controlador
-        Map<String, List<String>> datosMapa = controller.getMapaCurricularEstudiante();
-        for (Map.Entry<String, List<String>> periodo : datosMapa.entrySet()) {
-            String[] materias = periodo.getValue().toArray(new String[0]);
-            malla.getChildren().add(crearColumnaPeriodo(periodo.getKey(), materias));
-        }
-
-        ScrollPane scrollMapa = new ScrollPane(malla);
-        scrollMapa.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollMapa.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
-
-        mapaContainer.getChildren().addAll(topLegends, scrollMapa);
-        return mapaContainer;
-    }
-
-    private HBox crearEtiquetaSimbologia(String texto, String colorFill, String... colorBorderStr) {
-        HBox box = new HBox(5); box.setAlignment(Pos.CENTER);
-        Circle c = new Circle(6);
-        c.setFill(Color.web(colorFill));
-        if (colorBorderStr.length > 0) {
-            c.setStyle("-fx-stroke: " + colorBorderStr[0] + "; -fx-stroke-width: 2;");
-        }
-        Label l = new Label(texto); l.setStyle("-fx-text-fill: " + colorTextMain + "; -fx-font-size: 11px;");
-        box.getChildren().addAll(c, l);
-        return box;
-    }
-
-    private VBox crearColumnaPeriodo(String titulo, String[] materiasData) {
-        VBox col = new VBox(10);
-        col.setAlignment(Pos.TOP_CENTER);
-        col.setPrefWidth(140);
-        
-        Label lblTit = new Label(titulo);
-        lblTit.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px;");
-        col.getChildren().add(lblTit);
-
-        for (String md : materiasData) {
-            String[] parts = md.split("\\|");
-            String nombre = parts[0];
-            String bgColor = parts[1];
-            
-            StackPane nodo = new StackPane();
-            nodo.setMinHeight(50);
-            nodo.setPadding(new Insets(5));
-            
-            String borderStyle = bgColor.equals("transparent") ? "-fx-border-color: #2196F3; -fx-border-width: 2; -fx-border-radius: 15;" : "-fx-background-radius: 15;";
-            nodo.setStyle("-fx-background-color: " + (bgColor.equals("transparent") ? colorBgBase : bgColor) + "; " + borderStyle);
-            
-            Label lblNom = new Label(nombre.toUpperCase());
-            lblNom.setStyle("-fx-font-size: 9px; -fx-font-weight: bold; -fx-text-fill: " + (bgColor.equals("transparent") ? colorTextMain : "white") + "; -fx-alignment: center; -fx-text-alignment: center; -fx-wrap-text: true;");
-            
-            nodo.getChildren().add(lblNom);
-            col.getChildren().add(nodo);
-        }
-        return col;
-    }
-
-    private void mostrarPantallaCerrada(String mensaje) {
-        VBox panelCerrado = new VBox(20);
-        panelCerrado.setAlignment(Pos.CENTER);
-        panelCerrado.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-padding: 50; -fx-border-color: #D32F2F; -fx-border-width: 2; -fx-border-radius: 20; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(211,47,47,0.2), 30, 0, 0, 10);");
-        
-        Label lblIcono = new Label("🔒");
-        lblIcono.setStyle("-fx-font-size: 70px; -fx-font-family: 'Segoe UI Emoji'; -fx-text-fill: " + colorTextMain + ";");
-        
-        Label lblMensaje = new Label(mensaje);
-        lblMensaje.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #D32F2F;");
-        
-        Label lblSub = new Label("Por favor, mantente atento a los comunicados oficiales de la UAEMéx.");
-        lblSub.setStyle("-fx-font-size: 16px; -fx-text-fill: " + colorTextMain + ";");
-        
-        panelCerrado.getChildren().addAll(lblIcono, lblMensaje, lblSub);
-        
-        VBox centerWrap = new VBox(panelCerrado);
-        centerWrap.setAlignment(Pos.CENTER);
-        this.setCenter(centerWrap);
-    }
-
     private void leerPreferencias() {
         Preferences prefs = Preferences.userNodeForPackage(DashboardView.class);
         correoActual = prefs.get("LAST_ACTIVE_ACCOUNT", "");
-        boolean isDark = prefs.getBoolean("PREF_DARK_MODE_" + correoActual, false);
         
+        // CORRECCIÓN: Leemos el nombre directamente de las Preferences
+        nombreActual = prefs.get("PREF_NAME_" + correoActual, "Estudiante Optem");
+        
+        String fontPref = prefs.get("PREF_FONT_SIZE_" + correoActual, "Normal");
+        fontSizeActual = fontPref.equals("Pequeño") ? "12px" : fontPref.equals("Grande") ? "17px" : "14px";
+
+        boolean isDark = prefs.getBoolean("PREF_DARK_MODE_" + correoActual, false);
         colorFuerte = prefs.get("PREF_ACCENT_COLOR_" + correoActual, "#3D5A4D");
-        colorBgBase = isDark ? "#121212" : "#f1f5f9";
-        colorBgPanel = isDark ? "#1e1e1e" : "#ffffff";
-        colorTextMain = isDark ? "#f8f9fa" : "#1e293b";
-        colorTextMuted = isDark ? "#94a3b8" : "#64748b";
+        colorBgBase = isDark ? "#121212" : "#f1f5f9"; colorBgPanel = isDark ? "#1e1e1e" : "#ffffff";
+        colorTextMain = isDark ? "#f8f9fa" : "#1e293b"; colorTextMuted = isDark ? "#94a3b8" : "#64748b";
         colorBorder = isDark ? "#333333" : "#e2e8f0";
     }
 }

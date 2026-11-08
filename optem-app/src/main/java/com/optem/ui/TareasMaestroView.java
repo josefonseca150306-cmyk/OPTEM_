@@ -1,6 +1,9 @@
 package com.optem.ui;
 
+import java.awt.Desktop;
+import java.io.File;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.prefs.Preferences;
 
@@ -17,17 +20,18 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 
 public class TareasMaestroView {
 
     private final TareasMaestroController controller = new TareasMaestroController();
     private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder;
     private VBox contenedorTarjetas;
+    private String rutaArchivoSeleccionado = "";
 
     public VBox getView() {
         leerPreferencias();
@@ -38,7 +42,7 @@ public class TareasMaestroView {
         VBox titleBox = new VBox(5);
         Label titulo = new Label("📤 Panel de Asignaciones (Para Alumnos)");
         titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
-        Label subtitulo = new Label("Crea tareas, pon fechas límite, monitorea entregas y cierra el acceso cuando decidas.");
+        Label subtitulo = new Label("Crea tareas, adjunta PDFs/Word, pon fechas límite y revisa las entregas.");
         subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
         titleBox.getChildren().addAll(titulo, subtitulo);
 
@@ -46,7 +50,6 @@ public class TareasMaestroView {
         body.setAlignment(Pos.TOP_CENTER);
         VBox.setVgrow(body, Priority.ALWAYS);
 
-        // --- PANEL IZQUIERDO: CREAR TAREA ---
         VBox panelCrear = new VBox(15);
         panelCrear.setPrefWidth(400);
         panelCrear.setPadding(new Insets(25));
@@ -82,9 +85,25 @@ public class TareasMaestroView {
         cmbHora.setStyle("-fx-background-color: " + colorBgBase + "; -fx-border-color: " + colorBorder + ";");
         boxFechaHora.getChildren().addAll(dpFecha, cmbHora);
 
-        Button btnAdjuntar = new Button("📎 Adjuntar Material de Apoyo");
+        VBox boxAdjunto = new VBox(5);
+        Label lblArchivoSubido = new Label("Sin archivo adjunto");
+        lblArchivoSubido.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 11px; -fx-font-style: italic;");
+        
+        Button btnAdjuntar = new Button("📎 Buscar Documento (Word/PDF/Excel)");
         btnAdjuntar.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorFuerte + "; -fx-border-color: " + colorFuerte + "; -fx-border-radius: 6; -fx-cursor: hand;");
         btnAdjuntar.setMaxWidth(Double.MAX_VALUE);
+        
+        btnAdjuntar.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Seleccionar Material de Apoyo");
+            File file = fileChooser.showOpenDialog(layoutMain.getScene().getWindow());
+            if (file != null) {
+                rutaArchivoSeleccionado = file.getAbsolutePath();
+                lblArchivoSubido.setText("📎 Adjunto: " + file.getName());
+                lblArchivoSubido.setStyle("-fx-text-fill: " + colorFuerte + "; -fx-font-size: 12px; -fx-font-weight: bold;");
+            }
+        });
+        boxAdjunto.getChildren().addAll(btnAdjuntar, lblArchivoSubido);
 
         Button btnPublicar = new Button("Publicar Asignación");
         btnPublicar.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10; -fx-background-radius: 8; -fx-cursor: hand;");
@@ -92,18 +111,20 @@ public class TareasMaestroView {
 
         btnPublicar.setOnAction(e -> {
             if (cmbMateria.getValue() != null && !txtTitulo.getText().isEmpty()) {
-                controller.publicarNuevaTarea(txtTitulo.getText(), cmbMateria.getValue(), txtDesc.getText(), dpFecha.getValue(), cmbHora.getValue());
-                NotificacionManager.mostrarNotificacion("Tarea Publicada", "Los alumnos de " + cmbMateria.getValue() + " ya pueden ver la asignación.", "INFO");
+                controller.publicarNuevaTarea(txtTitulo.getText(), cmbMateria.getValue(), txtDesc.getText(), dpFecha.getValue(), cmbHora.getValue(), rutaArchivoSeleccionado);
+                NotificacionManager.mostrarNotificacion("Tarea Publicada", "Se ha enviado la asignación al grupo " + cmbMateria.getValue(), "INFO");
+                
                 txtTitulo.clear(); txtDesc.clear(); cmbMateria.setValue(null);
+                rutaArchivoSeleccionado = "";
+                lblArchivoSubido.setText("Sin archivo adjunto");
+                lblArchivoSubido.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 11px; -fx-font-style: italic;");
+                
                 actualizarListaTareas();
-            } else {
-                NotificacionManager.mostrarNotificacion("Error", "Falta seleccionar grupo o escribir título.", "ERROR");
-            }
+            } else { NotificacionManager.mostrarNotificacion("Faltan Datos", "Selecciona un grupo y escribe un título.", "ERROR"); }
         });
 
-        panelCrear.getChildren().addAll(lblCrearTit, cmbMateria, txtTitulo, txtDesc, new Label("Límite de Entrega:"), boxFechaHora, btnAdjuntar, new Region(), btnPublicar);
+        panelCrear.getChildren().addAll(lblCrearTit, cmbMateria, txtTitulo, txtDesc, new Label("Límite de Entrega:"), boxFechaHora, boxAdjunto, new Region(), btnPublicar);
 
-        // --- PANEL DERECHO: TAREAS ACTIVAS ---
         VBox panelLista = new VBox(15);
         HBox.setHgrow(panelLista, Priority.ALWAYS);
         
@@ -153,18 +174,17 @@ public class TareasMaestroView {
         Label lblFecha = new Label("Límite: " + tarea.get("fecha") + " a las " + tarea.get("hora"));
         lblFecha.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 12px;");
 
-        // Progreso de entregas
         VBox boxProgreso = new VBox(5);
-        double entregas = Double.parseDouble(tarea.get("entregas_actuales"));
+        double entregasActuales = Double.parseDouble(tarea.get("entregas_actuales"));
         double total = Double.parseDouble(tarea.get("entregas_total"));
         
         HBox textProg = new HBox();
         Label lblEnt = new Label("Entregas completadas:"); lblEnt.setStyle("-fx-text-fill: " + colorTextMuted + ";");
         Region sp2 = new Region(); HBox.setHgrow(sp2, Priority.ALWAYS);
-        Label lblNum = new Label((int)entregas + " de " + (int)total); lblNum.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
+        Label lblNum = new Label((int)entregasActuales + " de " + (int)total); lblNum.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
         textProg.getChildren().addAll(lblEnt, sp2, lblNum);
         
-        ProgressBar pb = new ProgressBar(total == 0 ? 0 : entregas / total);
+        ProgressBar pb = new ProgressBar(total == 0 ? 0 : entregasActuales / total);
         pb.setMaxWidth(Double.MAX_VALUE);
         pb.setStyle("-fx-accent: " + colorFuerte + "; -fx-control-inner-background: " + colorBgBase + ";");
         boxProgreso.getChildren().addAll(textProg, pb);
@@ -172,26 +192,119 @@ public class TareasMaestroView {
         HBox footer = new HBox(15);
         footer.setAlignment(Pos.CENTER_RIGHT);
         
+        String rutaArchivo = tarea.get("ruta_archivo");
+        if (rutaArchivo != null && !rutaArchivo.isEmpty()) {
+            Button btnAbrir = new Button("📎 Ver Documento Adjunto");
+            btnAbrir.setStyle("-fx-background-color: transparent; -fx-text-fill: #3b82f6; -fx-cursor: hand; -fx-font-weight: bold;");
+            btnAbrir.setOnAction(e -> {
+                try {
+                    File file = new File(rutaArchivo);
+                    if (file.exists()) Desktop.getDesktop().open(file);
+                    else NotificacionManager.mostrarNotificacion("Error", "El archivo original fue movido.", "ERROR");
+                } catch (Exception ex) {}
+            });
+            footer.getChildren().add(btnAbrir);
+        }
+
+        Region spFooter = new Region(); HBox.setHgrow(spFooter, Priority.ALWAYS);
+        footer.getChildren().add(spFooter);
+
         Button btnVer = new Button("Ver Trabajos");
         btnVer.setStyle("-fx-background-color: transparent; -fx-border-color: " + colorBorder + "; -fx-text-fill: " + colorTextMain + "; -fx-border-radius: 6; -fx-cursor: hand;");
+        btnVer.setOnAction(e -> abrirModalEntregas(tarea, card.getScene().getWindow()));
 
         Button btnCerrar = new Button("Cerrar Recepción");
         btnCerrar.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand;");
         btnCerrar.setOnAction(e -> {
             controller.cerrarRecepcionTarea(tarea.get("id"));
-            actualizarListaTareas(); // Refresca la vista
+            actualizarListaTareas(); 
             NotificacionManager.mostrarNotificacion("Asignación Cerrada", "Los alumnos ya no podrán subir archivos a esta tarea.", "INFO");
         });
 
-        if (estaAbierta) {
-            footer.getChildren().addAll(btnVer, btnCerrar);
-        } else {
-            footer.getChildren().add(btnVer);
-            card.setOpacity(0.7); // Se ve apagada si ya se cerró
-        }
+        if (estaAbierta) footer.getChildren().addAll(btnVer, btnCerrar);
+        else { footer.getChildren().add(btnVer); card.setOpacity(0.7); }
 
         card.getChildren().addAll(header, lblTit, lblFecha, boxProgreso, footer);
         return card;
+    }
+
+    private void abrirModalEntregas(Map<String, String> tarea, javafx.stage.Window owner) {
+        javafx.stage.Stage modal = new javafx.stage.Stage();
+        modal.initOwner(owner);
+        modal.initStyle(javafx.stage.StageStyle.UNDECORATED);
+        modal.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+        VBox layout = new VBox(20);
+        layout.setPadding(new Insets(30));
+        layout.setStyle("-fx-background-color: " + colorBgPanel + "; -fx-border-color: " + colorFuerte + "; -fx-border-width: 2; -fx-background-radius: 12; -fx-border-radius: 12;");
+
+        HBox header = new HBox();
+        VBox titulos = new VBox(2);
+        Label lblTit = new Label("Trabajos Entregados");
+        lblTit.setStyle("-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: " + colorTextMain + ";");
+        Label lblSub = new Label(tarea.get("titulo") + " (" + tarea.get("materia") + ")");
+        lblSub.setStyle("-fx-text-fill: " + colorTextMuted + ";");
+        titulos.getChildren().addAll(lblTit, lblSub);
+        
+        Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
+        Button btnCerrar = new Button("✕");
+        btnCerrar.setStyle("-fx-background-color: transparent; -fx-text-fill: " + colorTextMain + "; -fx-font-size: 18px; -fx-cursor: hand;");
+        btnCerrar.setOnAction(e -> modal.close());
+        header.getChildren().addAll(titulos, sp, btnCerrar);
+
+        VBox listaAlumnos = new VBox(10);
+        
+        // AQUÍ ESTÁN LOS ESPACIOS SEGUROS APLICADOS
+        List< Map<String, String> > entregas = controller.obtenerEntregasDeTarea(tarea.get("id"));
+        
+        if (entregas.isEmpty()) {
+            Label vacio = new Label("Ningún alumno ha entregado aún.");
+            vacio.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-style: italic; -fx-padding: 20;");
+            listaAlumnos.getChildren().add(vacio);
+        } else {
+            for (Map<String, String> entrega : entregas) {
+                HBox fila = new HBox(15);
+                fila.setAlignment(Pos.CENTER_LEFT);
+                fila.setPadding(new Insets(15));
+                fila.setStyle("-fx-background-color: " + colorBgBase + "; -fx-background-radius: 8; -fx-border-color: " + colorBorder + "; -fx-border-radius: 8;");
+                
+                VBox info = new VBox(2);
+                Label nom = new Label("👤 " + entrega.get("alumno"));
+                nom.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorTextMain + ";");
+                Label fec = new Label("Enviado: " + entrega.get("fecha_entrega"));
+                fec.setStyle("-fx-font-size: 11px; -fx-text-fill: " + colorTextMuted + ";");
+                info.getChildren().addAll(nom, fec);
+                
+                Region sp2 = new Region(); HBox.setHgrow(sp2, Priority.ALWAYS);
+                
+                Button btnAbrir = new Button("📄 Abrir Documento");
+                btnAbrir.setStyle("-fx-background-color: " + colorFuerte + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-cursor: hand;");
+                btnAbrir.setOnAction(e -> {
+                    try {
+                        File file = new File(entrega.get("ruta"));
+                        if (file.exists()) Desktop.getDesktop().open(file);
+                        else NotificacionManager.mostrarNotificacion("Error", "El archivo físico ya no está en la computadora.", "ERROR");
+                    } catch (Exception ex) { NotificacionManager.mostrarNotificacion("Error", "No se pudo abrir el documento.", "ERROR"); }
+                });
+                
+                fila.getChildren().addAll(info, sp2, btnAbrir);
+                listaAlumnos.getChildren().add(fila);
+            }
+        }
+
+        ScrollPane scroll = new ScrollPane(listaAlumnos);
+        scroll.setFitToWidth(true);
+        scroll.setPrefHeight(300);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+
+        layout.getChildren().addAll(header, scroll);
+        javafx.scene.Scene scene = new javafx.scene.Scene(layout, 550, 450);
+        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+        modal.setScene(scene);
+        
+        modal.setX(owner.getX() + (owner.getWidth() - 550) / 2);
+        modal.setY(owner.getY() + (owner.getHeight() - 450) / 2);
+        modal.show();
     }
 
     private void leerPreferencias() {

@@ -5,10 +5,14 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.prefs.Preferences;
 
 import com.optem.controllers.AgendaController;
+import com.optem.database.MockDB;
 import com.optem.logic.NotificacionManager;
 import com.optem.models.Actividad;
 
@@ -44,6 +48,7 @@ public class AgendaView {
 
     private final AgendaController controller = new AgendaController();
     private String colorFuerte, colorBgBase, colorBgPanel, colorTextMain, colorTextMuted, colorBorder;
+    private String correoActual;
     
     private LocalDate fechaActual = LocalDate.now();
     private String vistaActual = "WEEK"; 
@@ -101,7 +106,7 @@ public class AgendaView {
 
     private void leerPreferencias() {
         Preferences prefs = Preferences.userNodeForPackage(DashboardView.class);
-        String correoActual = prefs.get("LAST_ACTIVE_ACCOUNT", "");
+        correoActual = prefs.get("LAST_ACTIVE_ACCOUNT", "");
         boolean isDark = prefs.getBoolean("PREF_DARK_MODE_" + correoActual, false);
         colorFuerte = prefs.get("PREF_ACCENT_COLOR_" + correoActual, "#3D5A4D");
 
@@ -112,6 +117,35 @@ public class AgendaView {
         colorBorder = isDark ? "#333333" : "#e2e8f0";
     }
 
+    // =========================================================================
+    // NUEVO ALGORITMO: Fusiona clases oficiales del MockDB con actividades
+    // =========================================================================
+    private List<Actividad> obtenerClasesOficialesComoActividades(LocalDate dia) {
+        List<Actividad> clasesDelDia = new ArrayList<>();
+        String diaText = dia.format(DateTimeFormatter.ofPattern("EEEE", new Locale("es", "ES"))).toUpperCase();
+        
+        List<Map<String,String>> misMaterias = MockDB.obtenerMateriasDelAlumno(correoActual);
+        
+        if (misMaterias != null) {
+            for (Map<String, String> mat : misMaterias) {
+                String horario = mat.get("horario").toUpperCase();
+                if (horario.contains(diaText)) {
+                    String horaStr = "07:00"; 
+                    try {
+                        String parteDia = horario.substring(horario.indexOf(diaText));
+                        horaStr = parteDia.split(" ")[1];
+                    } catch (Exception e) {}
+                    
+                    LocalTime hora = LocalTime.of(Integer.parseInt(horaStr.split(":")[0]), Integer.parseInt(horaStr.split(":")[1]));
+                    Actividad act = new Actividad("CLASE_" + mat.get("clave"), "Clase: " + mat.get("nombre"), "Clase", "Horario Oficial: " + horario + "\nProfesor: " + mat.get("profesor"), dia, hora, mat.get("nombre"));
+                    act.setEstado("PENDIENTE");
+                    clasesDelDia.add(act);
+                }
+            }
+        }
+        return clasesDelDia;
+    }
+
     private HBox crearCabeceraAgenda() {
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
@@ -119,7 +153,7 @@ public class AgendaView {
         VBox titleBox = new VBox(5);
         Label titulo = new Label("Mi Agenda Universitaria");
         titulo.setStyle("-fx-font-weight: 800; -fx-font-size: 28px; -fx-text-fill: " + colorTextMain + ";");
-        Label subtitulo = new Label("Planifica y organiza tus semanas");
+        Label subtitulo = new Label("Tus clases oficiales y pendientes integrados");
         subtitulo.setStyle("-fx-text-fill: " + colorTextMuted + "; -fx-font-size: 14px;");
         titleBox.getChildren().addAll(titulo, subtitulo);
 
@@ -198,6 +232,7 @@ public class AgendaView {
         pildoras.setHgap(8); pildoras.setVgap(8);
         pildoras.getChildren().addAll(
             crearPildoraFiltro("Todas"), 
+            crearPildoraFiltro("Clases"), // ¡Nuevo filtro!
             crearPildoraFiltro("Tareas"), 
             crearPildoraFiltro("Actividades"), 
             crearPildoraFiltro("Pendientes")
@@ -335,19 +370,25 @@ public class AgendaView {
             timeGrid.getChildren().addAll(lHora, line);
         }
 
-        List<Actividad> actividades = controller.getActividadesDelDia(dia, filtroActual);
-        if (actividades != null) {
-            for (Actividad act : actividades) {
-                LocalTime t = (act.getHoraVencimiento() != null) ? act.getHoraVencimiento() : LocalTime.of(12, 0);
-                double posY = (t.getHour() - 7) * 60 + t.getMinute();
-                if(posY < 0) posY = 0; 
-                
-                HBox card = crearTarjetaTimeBlock(act);
-                AnchorPane.setLeftAnchor(card, 65.0);
-                AnchorPane.setTopAnchor(card, posY);
-                AnchorPane.setRightAnchor(card, 20.0);
-                timeGrid.getChildren().add(card);
-            }
+        List<Actividad> actividades = new ArrayList<>();
+        List<Actividad> actsPers = controller.getActividadesDelDia(dia, filtroActual);
+        if (actsPers != null) actividades.addAll(actsPers);
+        
+        // AGREGAR CLASES OFICIALES A LA VISTA
+        if (filtroActual.equals("Todas") || filtroActual.equals("Clases")) {
+            actividades.addAll(obtenerClasesOficialesComoActividades(dia));
+        }
+
+        for (Actividad act : actividades) {
+            LocalTime t = (act.getHoraVencimiento() != null) ? act.getHoraVencimiento() : LocalTime.of(12, 0);
+            double posY = (t.getHour() - 7) * 60 + t.getMinute();
+            if(posY < 0) posY = 0; 
+            
+            HBox card = crearTarjetaTimeBlock(act);
+            AnchorPane.setLeftAnchor(card, 65.0);
+            AnchorPane.setTopAnchor(card, posY);
+            AnchorPane.setRightAnchor(card, 20.0);
+            timeGrid.getChildren().add(card);
         }
 
         if (dia.equals(LocalDate.now())) {
@@ -421,20 +462,25 @@ public class AgendaView {
             headerDia.setStyle("-fx-padding: 10; -fx-border-color: " + colorBorder + "; -fx-border-width: 0 0 2 0;");
             colDia.getChildren().add(headerDia);
 
-            List<Actividad> acts = controller.getActividadesDelDia(dia, filtroActual);
-            if(acts != null) {
-                for (Actividad act : acts) {
-                    VBox bloque = crearBloqueEventoMini(act);
-                    
-                    bloque.setOnDragDetected(e -> {
-                        Dragboard db = bloque.startDragAndDrop(TransferMode.MOVE);
-                        ClipboardContent content = new ClipboardContent();
-                        content.putString(act.getId()); 
-                        db.setContent(content);
-                        e.consume();
-                    });
-                    colDia.getChildren().add(bloque);
-                }
+            List<Actividad> acts = new ArrayList<>();
+            List<Actividad> actsBD = controller.getActividadesDelDia(dia, filtroActual);
+            if(actsBD != null) acts.addAll(actsBD);
+            
+            if (filtroActual.equals("Todas") || filtroActual.equals("Clases")) {
+                acts.addAll(obtenerClasesOficialesComoActividades(dia));
+            }
+
+            for (Actividad act : acts) {
+                VBox bloque = crearBloqueEventoMini(act);
+                
+                bloque.setOnDragDetected(e -> {
+                    Dragboard db = bloque.startDragAndDrop(TransferMode.MOVE);
+                    ClipboardContent content = new ClipboardContent();
+                    content.putString(act.getId()); 
+                    db.setContent(content);
+                    e.consume();
+                });
+                colDia.getChildren().add(bloque);
             }
 
             colDia.setOnDragOver(e -> {
@@ -448,12 +494,17 @@ public class AgendaView {
                 boolean success = false;
                 if (db.hasString()) {
                     String id = db.getString();
-                    Actividad aMover = controller.buscarActividadPorId(id);
-                    if (aMover != null) {
-                        aMover.setFecha(dia); 
-                        success = true;
-                        renderizarVistaActual(); 
-                        NotificacionManager.mostrarNotificacion("Reprogramado", "Actividad movida al " + nombresDias[dia.getDayOfWeek().getValue()-1], "INFO");
+                    // Protege para no arrastrar clases oficiales
+                    if (id.startsWith("CLASE_")) {
+                        NotificacionManager.mostrarNotificacion("Acción Denegada", "No puedes reprogramar los horarios de tus clases oficiales.", "URGENTE");
+                    } else {
+                        Actividad aMover = controller.buscarActividadPorId(id);
+                        if (aMover != null) {
+                            aMover.setFecha(dia); 
+                            success = true;
+                            renderizarVistaActual(); 
+                            NotificacionManager.mostrarNotificacion("Reprogramado", "Actividad movida al " + nombresDias[dia.getDayOfWeek().getValue()-1], "INFO");
+                        }
                     }
                 }
                 e.setDropCompleted(success);
@@ -502,19 +553,24 @@ public class AgendaView {
             lblNum.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: " + (fechaCelda.equals(LocalDate.now()) ? colorFuerte : colorTextMain) + ";");
             celdaDia.getChildren().add(lblNum);
 
-            List<Actividad> acts = controller.getActividadesDelDia(fechaCelda, filtroActual);
-            if(acts != null) {
-                int mostrados = 0;
-                for (Actividad act : acts) {
-                    if (mostrados >= 2) {
-                        Label lblMas = new Label("+" + (acts.size() - 2) + " más");
-                        lblMas.setStyle("-fx-font-size: 10px; -fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold;");
-                        celdaDia.getChildren().add(lblMas);
-                        break;
-                    }
-                    celdaDia.getChildren().add(crearMicroPildora(act));
-                    mostrados++;
+            List<Actividad> acts = new ArrayList<>();
+            List<Actividad> actsBD = controller.getActividadesDelDia(fechaCelda, filtroActual);
+            if(actsBD != null) acts.addAll(actsBD);
+            
+            if (filtroActual.equals("Todas") || filtroActual.equals("Clases")) {
+                acts.addAll(obtenerClasesOficialesComoActividades(fechaCelda));
+            }
+
+            int mostrados = 0;
+            for (Actividad act : acts) {
+                if (mostrados >= 2) {
+                    Label lblMas = new Label("+" + (acts.size() - 2) + " más");
+                    lblMas.setStyle("-fx-font-size: 10px; -fx-text-fill: " + colorFuerte + "; -fx-font-weight: bold;");
+                    celdaDia.getChildren().add(lblMas);
+                    break;
                 }
+                celdaDia.getChildren().add(crearMicroPildora(act));
+                mostrados++;
             }
             
             celdaDia.setOnMouseClicked(e -> {
@@ -591,7 +647,10 @@ public class AgendaView {
         GridPane gridTiempo = new GridPane();
         gridTiempo.setHgap(30); gridTiempo.setVgap(10);
         gridTiempo.setStyle("-fx-background-color: " + colorBgBase + "; -fx-padding: 15; -fx-background-radius: 8;");
-        gridTiempo.add(crearInfoLabel("FECHA ASIGNADA", "Hoy, 07:00 AM"), 0, 0); 
+        
+        // ¡ARREGLO DEL TEXTO QUEMADO! (Se reemplazó "Hoy, 07:00 AM" por datos reales)
+        String fechaRegistro = (act.getFecha() != null) ? act.getFecha().minusDays(1).toString() : "---";
+        gridTiempo.add(crearInfoLabel("REGISTRO", fechaRegistro), 0, 0); 
         
         String fechaTexto = (act.getFecha() != null) ? act.getFecha().toString() : "---";
         String horaTexto = (act.getHoraVencimiento() != null) ? act.getHoraVencimiento().toString() : "---";

@@ -1,68 +1,121 @@
 package com.optem.logic;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
 import com.optem.models.Actividad;
+import com.optem.ui.DashboardView;
 
 public class ActividadManager {
+
     private static ActividadManager instance;
+    private Map<LocalDate, List<Actividad>> actividadesPorFecha;
     private String usuarioActual;
-    private List<Actividad> listaActividades;
+    
+    // Archivo físico donde se guardará todo
+    private final String ARCHIVO_ACT = "actividades_db.dat";
 
     private ActividadManager() {
-        listaActividades = new ArrayList<>();
-        cargarDatosDePrueba();
+        actividadesPorFecha = new HashMap<>();
+        cargarDatosFisicos(); // Carga al iniciar
     }
 
     public static ActividadManager getInstance() {
-        if (instance == null) {
-            instance = new ActividadManager();
-        }
+        if (instance == null) instance = new ActividadManager();
         return instance;
     }
 
-    public void setUsuarioActual(String correoUsuario) {
-        this.usuarioActual = correoUsuario;
-    }
-
-    private void cargarDatosDePrueba() {
-        LocalDate hoy = LocalDate.now();
-        listaActividades.add(new Actividad("1", "Práctica 3 de Redes", "Tarea", "Configurar VLANs en Cisco Packet Tracer.", hoy, LocalTime.of(23, 59), "REDES Y TELECOMUNICACIONES"));
-        listaActividades.add(new Actividad("2", "Resumen Capítulo 4", "Estudio", "Leer el libro de Sommerville y hacer mapa conceptual.", hoy, LocalTime.of(15, 30), "ANALISIS Y DISEÑO DE SOFTWARE"));
-        
-        Actividad a3 = new Actividad("3", "Instalación de SQL Server", "Tarea", "Dejar configurado el entorno para la clase práctica.", hoy.minusDays(1), LocalTime.of(12, 0), "BASES DE DATOS");
-        a3.setEstado("COMPLETADO");
-        listaActividades.add(a3);
-        
-        Actividad a4 = new Actividad("4", "Diagramas de Clase JODA", "Tarea", "Terminar la documentación del compilador.", hoy, LocalTime.of(18, 0), "DESARROLLO DE SOFTWARE");
-        a4.setEstado("EN_PROCESO");
-        listaActividades.add(a4);
+    public void setUsuarioActual(String correo) {
+        this.usuarioActual = correo;
     }
 
     public List<Actividad> getAllActividades() {
-        return listaActividades;
+        List<Actividad> todas = new ArrayList<>();
+        actividadesPorFecha.values().forEach(todas::addAll);
+        return todas;
     }
 
     public List<Actividad> getActividadesDelDia(LocalDate fecha) {
-        return listaActividades.stream()
-                .filter(a -> a.getFecha().equals(fecha))
-                .collect(Collectors.toList());
+        return actividadesPorFecha.getOrDefault(fecha, new ArrayList<>());
     }
 
-    public void agregarActividad(Actividad nuevaActividad) {
-        listaActividades.add(nuevaActividad);
+    public Actividad buscarActividadPorId(String id) {
+        for (List<Actividad> lista : actividadesPorFecha.values()) {
+            for (Actividad a : lista) if (a.getId().equals(id)) return a;
+        }
+        return null;
     }
 
-    public void actualizarEstadoActividad(String id, String nuevoEstado) {
-        for (Actividad act : listaActividades) {
-            if (act.getId().equals(id)) {
-                act.setEstado(nuevoEstado);
-                break;
+    public void agregarActividad(Actividad act) {
+        actividadesPorFecha.computeIfAbsent(act.getFecha(), k -> new ArrayList<>()).add(act);
+        guardarDatosFisicos(); // Guarda en disco
+    }
+
+    public void eliminarActividad(String id) {
+        for (List<Actividad> lista : actividadesPorFecha.values()) {
+            lista.removeIf(a -> a.getId().equals(id));
+        }
+        guardarDatosFisicos(); // Guarda en disco
+    }
+
+    public List<Actividad> obtenerActividadesPorMateria(String materia) {
+        return getAllActividades().stream().filter(a -> materia.equals(a.getMateria())).collect(Collectors.toList());
+    }
+
+    public void actualizarEstadoActividad(String idActividad, String nuevoEstado) {
+        for (List<Actividad> lista : actividadesPorFecha.values()) {
+            for (Actividad act : lista) {
+                if (act.getId().equals(idActividad)) {
+                    act.setEstado(nuevoEstado);
+                    
+                    // LÓGICA DE XP REFINADA: Solo suma si es una TAREA
+                    if (nuevoEstado.equals("COMPLETADO") && "Tarea".equalsIgnoreCase(act.getTipo())) {
+                        sumarXP(50); // El Alumno gana 50 XP por tarea
+                    }
+                    
+                    guardarDatosFisicos();
+                    return;
+                }
             }
+        }
+    }
+
+    private void sumarXP(int cantidad) {
+        if (usuarioActual != null) {
+            Preferences prefs = Preferences.userNodeForPackage(DashboardView.class);
+            int xpActual = prefs.getInt("XP_USER_" + usuarioActual, 0);
+            prefs.putInt("XP_USER_" + usuarioActual, xpActual + cantidad);
+            NotificacionManager.mostrarNotificacion("¡Logro Desbloqueado!", "Has obtenido +" + cantidad + " XP por completar tu tarea oficial.", "INFO");
+        }
+    }
+
+    // --- MÉTODOS DE PERSISTENCIA ---
+    private void guardarDatosFisicos() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ARCHIVO_ACT))) {
+            oos.writeObject(actividadesPorFecha);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void cargarDatosFisicos() {
+        File file = new File(ARCHIVO_ACT);
+        if (!file.exists()) return;
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            actividadesPorFecha = (Map<LocalDate, List<Actividad>>) ois.readObject();
+        } catch (Exception e) {
+            actividadesPorFecha = new HashMap<>();
         }
     }
 }
